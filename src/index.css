@@ -1,0 +1,72 @@
+@import 'tailwindcss';
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@theme {
+  --font-sans: 'Inter', sans-serif;
+
+  --color-brand-50: #FBEAF3;
+  --color-brand-100: #F6D3E6;
+  --color-brand-200: #EEA8CC;
+  --color-brand-300: #E47AB1;
+  --color-brand-400: #DA4D97;
+  --color-brand-500: #D02F88;
+  --color-brand-600: #C7247D;
+  --color-brand-700: #A31D68;
+  --color-brand-800: #7F1653;
+  --color-brand-900: #5B0F3E;
+  --color-brand-950: #420B2E;
+
+  --animate-fade-in: fadeIn 0.5s ease-out;
+  --animate-slide-up: slideUp 0.5s ease-out;
+
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    0% {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-all duration-200;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-all duration-200;
+  }
+
+  .card {
+    @apply bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200;
+  }
+
+  .input-field {
+    @apply block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:ring-brand-500 focus:border-brand-500 sm:text-sm transition-colors;
+  }
+}
