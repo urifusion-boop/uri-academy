@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import type { StudentProfile } from '../types/schema';
+import type { StudentProfile, Submission } from '../types/schema';
 import { formatDate } from '../utils/date';
+import { Link } from 'react-router-dom';
 
 export function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -11,22 +12,38 @@ export function AdminDashboard() {
     revenue: '₦0',
   });
   const [recentStudents, setRecentStudents] = useState<StudentProfile[]>([]);
-  const [pendingTasks, setPendingTasks] = useState<{ id: string; title: string; completed: boolean }[]>([]);
+  const [pendingTasks, setPendingTasks] = useState<
+    { id: string; title: string; completed: boolean; link?: string }[]
+  >([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statsData, studentsData, tasksData] = await Promise.all([
+        const [statsData, studentsData, submissionsData] = await Promise.all([
           api.getAdminStats(),
           api.getStudents(),
-          api.getPendingTasks()
+          api.assignments.getAllSubmissions().catch(() => []),
         ]);
 
         setStats(statsData);
         // Get last 4 students
         setRecentStudents(studentsData.slice(-4).reverse());
-        setPendingTasks(tasksData);
+
+        // Generate grading tasks from pending submissions
+        const gradingTasks = submissionsData
+          .filter((s: Submission) => s.status === 'PENDING')
+          .map((s: Submission) => ({
+            id: s.id,
+            title: `Grade ${s.student?.user?.name || 'Student'}'s ${
+              s.assignment?.title || 'Assignment'
+            }`,
+            completed: false,
+            link: '/admin/submissions',
+          }))
+          .slice(0, 5);
+
+        setPendingTasks(gradingTasks);
       } catch (error) {
         console.error('Failed to fetch admin dashboard data:', error);
       } finally {
@@ -90,7 +107,9 @@ export function AdminDashboard() {
               </div>
             ))}
             {recentStudents.length === 0 && (
-              <p className="text-gray-500 text-center py-4">No recent registrations</p>
+              <p className="text-gray-500 text-center py-4">
+                No recent registrations
+              </p>
             )}
           </div>
         </div>
@@ -105,14 +124,36 @@ export function AdminDashboard() {
                   defaultChecked={task.completed}
                   className="rounded text-brand-600 focus:ring-brand-500"
                   aria-label={`Mark task "${task.title}" as complete`}
+                  disabled
                 />
-                <span className={`text-sm ${task.completed ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
-                  {task.title}
-                </span>
+                {task.link ? (
+                  <Link
+                    to={task.link}
+                    className={`text-sm hover:text-brand-600 ${
+                      task.completed
+                        ? 'text-gray-400 line-through'
+                        : 'text-gray-700'
+                    }`}
+                  >
+                    {task.title}
+                  </Link>
+                ) : (
+                  <span
+                    className={`text-sm ${
+                      task.completed
+                        ? 'text-gray-400 line-through'
+                        : 'text-gray-700'
+                    }`}
+                  >
+                    {task.title}
+                  </span>
+                )}
               </div>
             ))}
             {pendingTasks.length === 0 && (
-              <p className="text-gray-500 text-center py-4">No pending tasks</p>
+              <p className="text-gray-500 text-center py-4">
+                No pending grading tasks
+              </p>
             )}
           </div>
         </div>

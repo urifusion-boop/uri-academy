@@ -14,6 +14,7 @@ import type {
   CurriculumItem,
   Assignment,
   AttendanceSession,
+  Submission,
 } from '../types/schema';
 import { formatDate } from '../utils/date';
 
@@ -22,6 +23,7 @@ export function StudentHome() {
   const [curriculum, setCurriculum] = useState<CurriculumItem[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [sessions, setSessions] = useState<AttendanceSession[]>([]);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,18 +37,20 @@ export function StudentHome() {
         setProfile(profileData);
 
         // Fetch other data in parallel, allowing failures
-        const [curriculumData, assignmentsData, sessionsData] =
+        const [curriculumData, assignmentsData, sessionsData, submissionsData] =
           await Promise.all([
             api.getCurriculum().catch(() => []),
             api.assignments.list().catch(() => []),
             api.attendance.getSessions().catch(() => []) as Promise<
               AttendanceSession[]
             >,
+            api.assignments.getSubmissions().catch(() => []),
           ]);
 
         setCurriculum(curriculumData);
         setAssignments(assignmentsData);
         setSessions(sessionsData);
+        setSubmissions(submissionsData);
       } catch (error) {
         console.error('Failed to load student home data:', error);
       } finally {
@@ -75,17 +79,18 @@ export function StudentHome() {
   // Get upcoming assignments (not submitted, sorted by due date)
   const upcomingAssignments = (Array.isArray(assignments) ? assignments : [])
     .filter((a) => {
-      const submission = profile?.submissions?.find(
-        (s) => s.assignmentId === a.id
-      );
-      return !submission; // Only show pending assignments
+      // Check both profile submissions and fetched submissions
+      const hasSubmission =
+        profile?.submissions?.some((s) => s.assignmentId === a.id) ||
+        submissions.some((s) => s.assignmentId === a.id);
+      return !hasSubmission; // Only show pending assignments
     })
     .sort((a, b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime())
     .slice(0, 2);
 
   // Get next lessons (just showing topics from current module for now)
   const nextLessons =
-    currentModule?.topics?.slice(0, 3).map((topic, i) => ({
+    currentModule?.topics?.slice(0, 3)?.map((topic, i) => ({
       id: i,
       title: topic,
       duration: currentModule?.durationMinutes

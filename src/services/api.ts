@@ -14,6 +14,7 @@ import type {
   Assignment,
   Cohort,
   Submission,
+  Payment,
 } from '../types/schema';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -40,14 +41,14 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function fetchClient<T>(
   endpoint: string,
-  options?: RequestInit
+  options?: RequestInit & { skipAuth?: boolean }
 ): Promise<T> {
   const token = localStorage.getItem('token');
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   };
 
-  if (token) {
+  if (token && !options?.skipAuth) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
@@ -152,20 +153,58 @@ const inflightRequests = new Map<string, Promise<unknown>>();
 let userProfileCache: StudentProfile | null = null;
 let userProfileCacheTimestamp = 0;
 
+export const clearUserProfileCache = () => {
+  userProfileCache = null;
+  userProfileCacheTimestamp = 0;
+  localStorage.removeItem('user_profile');
+};
+
 // New API Structure based on User Requirements
 export const api = {
+  clearProfileCache: clearUserProfileCache,
   auth: {
-    register: (data: ApiPayload) =>
-      fetchClient('/api/auth/register', {
+    register: async (data: ApiPayload) => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return {
+          token: 'mock-jwt-token',
+          user: mockUsers[0],
+        };
+      }
+      return fetchClient('/api/auth/register', {
         method: 'POST',
         body: JSON.stringify(data),
-      }),
-    login: (data: ApiPayload) =>
-      fetchClient('/api/auth/login', {
+        skipAuth: true,
+      });
+    },
+    login: async (data: ApiPayload) => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        // Find user by email (mock login)
+        const email = (data.email as string) || '';
+        const user = mockUsers.find((u) => u.email === email) || mockUsers[0];
+
+        return {
+          token: 'mock-jwt-token',
+          refreshToken: 'mock-refresh-token',
+          user: user,
+        };
+      }
+      return fetchClient('/api/auth/login', {
         method: 'POST',
         body: JSON.stringify(data),
-      }),
-    refresh: () => fetchClient('/api/auth/refresh', { method: 'POST' }),
+        skipAuth: true,
+      });
+    },
+    refresh: async () => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return {
+          token: 'mock-refreshed-jwt-token',
+        };
+      }
+      return fetchClient('/api/auth/refresh', { method: 'POST' });
+    },
     logout: () => {
       // If we have a refresh token, we should send it.
       // However, we don't seem to store it in localStorage in Login.tsx
@@ -175,7 +214,7 @@ export const api = {
       // Best effort: just clear local state.
 
       const refreshToken = localStorage.getItem('refreshToken');
-      if (refreshToken) {
+      if (refreshToken && !USE_MOCK) {
         return fetchClient('/api/auth/logout', {
           method: 'POST',
           body: JSON.stringify({ refreshToken }),
@@ -185,20 +224,37 @@ export const api = {
       // We'll just return resolved promise so frontend can proceed to clear local state.
       return Promise.resolve();
     },
-    requestPasswordReset: (email: string) =>
-      fetchClient('/api/auth/password/reset/request', {
+    requestPasswordReset: async (email: string) => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return { success: true, message: 'Reset email sent' };
+      }
+      return fetchClient('/api/auth/password/reset/request', {
         method: 'POST',
         body: JSON.stringify({ email }),
-      }),
-    confirmPasswordReset: (data: ApiPayload) =>
-      fetchClient('/api/auth/password/reset/confirm', {
+      });
+    },
+    confirmPasswordReset: async (data: ApiPayload) => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return { success: true, message: 'Password reset successful' };
+      }
+      return fetchClient('/api/auth/password/reset/confirm', {
         method: 'POST',
         body: JSON.stringify(data),
-      }),
+      });
+    },
   },
 
   users: {
     getMe: async (): Promise<User> => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        // Return the current mock user (assumed to be the first one or a specific one)
+        // In a real app, we'd decode the token or check local storage to know which user is logged in
+        // For this mock, we'll just return 'user-current' or the first user
+        return mockUsers.find((u) => u.id === 'user-current') || mockUsers[0];
+      }
       const response = await fetchClient<Record<string, unknown>>(
         '/api/users/me'
       );
@@ -217,25 +273,44 @@ export const api = {
 
       return user;
     },
-    updateMe: (data: Partial<User>) =>
-      fetchClient('/api/users/me', {
+    updateMe: async (data: Partial<User>) => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return { ...mockUsers[0], ...data };
+      }
+      return fetchClient('/api/users/me', {
         method: 'PATCH',
         body: JSON.stringify(data),
-      }),
-    updatePassword: (data: ApiPayload) =>
-      fetchClient('/api/users/me/password', {
+      });
+    },
+    updatePassword: async (data: ApiPayload) => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return { success: true };
+      }
+      return fetchClient('/api/users/me/password', {
         method: 'PATCH',
         body: JSON.stringify(data),
-      }),
-    updateNotifications: (data: ApiPayload) =>
-      fetchClient('/api/users/me/notifications', {
+      });
+    },
+    updateNotifications: async (data: ApiPayload) => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return { success: true };
+      }
+      return fetchClient('/api/users/me/notifications', {
         method: 'PATCH',
         body: JSON.stringify(data),
-      }),
+      });
+    },
   },
 
   assignments: {
     list: async (): Promise<Assignment[]> => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return mockAssignments;
+      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response = await fetchClient<any>('/api/assignments');
       // Normalize response: check for direct array or nested items
@@ -251,17 +326,77 @@ export const api = {
     getGrades: () => fetchClient('/api/assignments/grades'),
     getById: (id: string): Promise<Assignment> =>
       fetchClient(`/api/assignments/${id}`),
-    createSubmission: (id: string, data: ApiPayload) =>
-      fetchClient(`/api/assignments/${id}/submissions`, {
+    createSubmission: async (id: string, data: ApiPayload) => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        // Create a mock submission response
+        const newSubmission: Submission = {
+          id: `sub-${Date.now()}`,
+          assignmentId: id,
+          studentId: 'profile-current', // Mock current user
+          status: 'PENDING', // Use string literal or enum value
+          submittedAt: new Date().toISOString(),
+          // Add contentURL or fileRef from data if present
+          ...data,
+        } as Submission;
+
+        // In a real mock store, we would push this to mockSubmissions
+        // mockSubmissions.push(newSubmission);
+        return newSubmission;
+      }
+      return fetchClient(`/api/assignments/${id}/submissions`, {
         method: 'POST',
         body: JSON.stringify(data),
-      }),
+      });
+    },
     getSubmissions: async (): Promise<Submission[]> => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        // Return submissions for the current mock student
+        return mockSubmissions
+          .filter((s) => s.studentId === 'profile-current')
+          .map((sub) => ({
+            ...sub,
+            assignment: mockAssignments.find((a) => a.id === sub.assignmentId),
+          }));
+      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response = await fetchClient<any>('/api/assignments/submissions');
       if (Array.isArray(response)) return response;
       if (response && Array.isArray(response.items)) return response.items;
       return [];
+    },
+    getAllSubmissions: async (): Promise<Submission[]> => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return mockSubmissions.map((sub) => ({
+          ...sub,
+          student: mockStudentProfiles.find((p) => p.id === sub.studentId),
+          assignment: mockAssignments.find((a) => a.id === sub.assignmentId),
+        }));
+      }
+      try {
+        // Try admin endpoint first
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const response = await fetchClient<any>('/api/admin/submissions');
+        if (Array.isArray(response)) return response;
+        if (response && Array.isArray(response.items)) return response.items;
+        return [];
+      } catch {
+        // Fallback to query param
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const response = await fetchClient<any>(
+            '/api/assignments/submissions?all=true'
+          );
+          if (Array.isArray(response)) return response;
+          if (response && Array.isArray(response.items)) return response.items;
+          return [];
+        } catch (error) {
+          console.warn('Failed to fetch all submissions', error);
+          return [];
+        }
+      }
     },
     getSubmission: (id: string): Promise<Submission> =>
       fetchClient(`/api/assignments/submissions/${id}`),
@@ -290,6 +425,19 @@ export const api = {
       page?: number;
       pageSize?: number;
     }) => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        // Return mock sessions
+        return [
+          {
+            id: 'session-1',
+            cohortId: 'cohort-1',
+            date: new Date().toISOString(),
+            topic: 'Sales Fundamentals',
+            durationMinutes: 60,
+          },
+        ];
+      }
       const qp: Record<string, string> = {};
       if (params?.cohortId) qp.cohortId = params.cohortId;
       if (typeof params?.page === 'number') qp.page = String(params.page);
@@ -599,16 +747,32 @@ export const api = {
         if (user.profile) {
           profile = { ...user.profile, user };
         } else {
-          // Since /users/me/profile endpoint does not exist (404),
-          // we construct a basic profile from the user object.
-          profile = {
-            id: user.id,
-            userId: user.id,
-            user: user,
-            progress: 0,
-            studentIdCode: 'PENDING',
-            cohortId: null,
-          };
+          // Try to fetch the full student profile (which includes payments/cohort/etc)
+          try {
+            const students = await api.getStudents({
+              search: user.email,
+            });
+            const found = students.find((s) => s.userId === user.id);
+            if (found) {
+              profile = { ...found, user };
+            } else {
+              throw new Error('Profile not found in students list');
+            }
+          } catch (e) {
+            // Fallback: construct a basic profile from the user object
+            console.warn(
+              'Could not fetch full profile, constructing basic one',
+              e
+            );
+            profile = {
+              id: user.id,
+              userId: user.id,
+              user: user,
+              progress: 0,
+              studentIdCode: 'PENDING',
+              cohortId: null,
+            };
+          }
         }
 
         // Fetch cohort details if we have an ID but no cohort object
@@ -688,9 +852,7 @@ export const api = {
   },
 
   getCurrentUser: async (): Promise<User> => {
-    if (!USE_MOCK) return api.users.getMe();
-    await delay(DELAY);
-    return mockUsers.find((u) => u.id === 'user-current') || mockUsers[0];
+    return api.users.getMe();
   },
 
   getSubmissions: async (): Promise<Submission[]> => {
@@ -770,12 +932,98 @@ export const api = {
   },
   files: {
     upload: async (data: { fileName: string; contentType?: string }) => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return {
+          fileRef: `mock-file-${Date.now()}`,
+          url: '', // Empty URL signals no need to PUT (mock mode)
+        };
+      }
       const body = JSON.stringify(data);
       try {
         return await fetchClient('/api/files/upload', { method: 'POST', body });
       } catch {
         return fetchClient('/files/upload', { method: 'POST', body });
       }
+    },
+  },
+
+  payments: {
+    initialize: async (data?: {
+      amount?: number;
+      plan?: 'full' | 'deposit' | 'balance';
+    }): Promise<{
+      authorizationUrl: string;
+      reference: string;
+    }> => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return {
+          authorizationUrl: 'https://checkout.paystack.com/mock-checkout',
+          reference: `ref_${Date.now()}`,
+        };
+      }
+      return fetchClient('/api/payments/initialize', {
+        method: 'POST',
+        body: JSON.stringify(data || {}),
+      });
+    },
+    verify: async (
+      reference: string
+    ): Promise<{
+      status: string;
+      reference: string;
+      tokens?: {
+        accessToken: string;
+        refreshToken: string;
+      };
+    }> => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+
+        // Update mock profile
+        const profile = mockStudentProfiles.find(
+          (p) => p.userId === 'user-current'
+        );
+        if (profile) {
+          if (!profile.payments) profile.payments = [];
+          profile.payments.push({
+            id: `pay-${Date.now()}`,
+            studentId: profile.id,
+            amount: 30000,
+            currency: 'NGN',
+            status: 'PAID',
+            method: 'CARD',
+            provider: 'PAYSTACK',
+            reference,
+            createdAt: new Date().toISOString(),
+          } as Payment);
+        }
+
+        clearUserProfileCache();
+
+        return {
+          status: 'PAID',
+          reference,
+          tokens: {
+            accessToken: 'mock-new-access-token-student',
+            refreshToken: 'mock-new-refresh-token',
+          },
+        };
+      }
+      const response = await fetchClient<{
+        status: string;
+        reference: string;
+        tokens?: {
+          accessToken: string;
+          refreshToken: string;
+        };
+      }>('/api/payments/verify', {
+        method: 'POST',
+        body: JSON.stringify({ reference }),
+      });
+      clearUserProfileCache();
+      return response;
     },
   },
 };

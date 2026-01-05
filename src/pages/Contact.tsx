@@ -19,11 +19,12 @@ export function Contact() {
       <section className="bg-gray-50 py-20">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-6">
-            Get in <span className="text-brand-600">Touch</span>
+            Hire Pre-Trained{' '}
+            <span className="text-brand-600">Sales Talent</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Have questions about the program? We're here to help you start your
-            journey.
+            Access a pipeline of skilled, job-ready SDRs and AEs. No recruitment
+            fees. No risk. Just results.
           </p>
         </div>
       </section>
@@ -86,10 +87,14 @@ export function Contact() {
                 <div className="absolute bottom-0 right-0 w-64 h-64 bg-brand-600 rounded-full blur-3xl opacity-20 -mr-16 -mb-16"></div>
 
                 <div className="relative z-10">
-                  <h3 className="text-3xl font-bold mb-6">Send us a message</h3>
+                  <h3 className="text-3xl font-bold mb-6">
+                    The Talent You Need, Ready to Perform
+                  </h3>
                   <p className="text-brand-100 mb-8 leading-relaxed">
-                    Fill out the form and our admissions team will get back to
-                    you within 24 hours. We can't wait to hear from you!
+                    Our graduates aren't just trained—they're tested. Each
+                    candidate has completed real sales campaigns, handled
+                    objections, and closed deals before they ever reach your
+                    interview room.
                   </p>
 
                   <div className="space-y-6">
@@ -97,19 +102,19 @@ export function Contact() {
                       <div className="w-8 h-8 rounded-full bg-brand-800 flex items-center justify-center text-brand-300 font-bold text-sm">
                         1
                       </div>
-                      <p>Fill out your details</p>
+                      <p>Trained on modern sales tools and CRM systems</p>
                     </div>
                     <div className="flex items-center gap-4 text-brand-100">
                       <div className="w-8 h-8 rounded-full bg-brand-800 flex items-center justify-center text-brand-300 font-bold text-sm">
                         2
                       </div>
-                      <p>Submit your inquiry</p>
+                      <p>Experienced in cold outreach and discovery calls</p>
                     </div>
                     <div className="flex items-center gap-4 text-brand-100">
                       <div className="w-8 h-8 rounded-full bg-brand-800 flex items-center justify-center text-brand-300 font-bold text-sm">
                         3
                       </div>
-                      <p>Get a response via email</p>
+                      <p>Culturally adaptable for global markets</p>
                     </div>
                   </div>
                 </div>
@@ -166,7 +171,7 @@ export function Contact() {
                     type="submit"
                     className="w-full bg-brand-600 text-white py-4 rounded-lg font-bold hover:bg-brand-700 transition-colors flex items-center justify-center gap-2"
                   >
-                    Send Message
+                    Partner With Us
                     <Send className="w-4 h-4" />
                   </button>
                 </form>

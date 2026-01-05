@@ -1,5 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, Download, Plus, Trash2, Edit } from 'lucide-react';
+import {
+  Search,
+  Filter,
+  Download,
+  Plus,
+  Trash2,
+  Edit,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 import { api } from '../services/api';
 import type { StudentProfile, Cohort, User } from '../types/schema';
 import { formatDate } from '../utils/date';
@@ -20,6 +29,7 @@ export function AdminStudents() {
   const [selectedStudent, setSelectedStudent] = useState<StudentProfile | null>(
     null
   );
+  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
     email: '',
     password: '',
@@ -112,6 +122,7 @@ export function AdminStudents() {
 
   const handleOpenAdd = () => {
     setSelectedStudent(null);
+    setShowPassword(false);
     setForm({
       email: '',
       password: '',
@@ -124,6 +135,7 @@ export function AdminStudents() {
 
   const handleOpenEdit = (student: StudentProfile) => {
     setSelectedStudent(student);
+    setShowPassword(false);
     setForm({
       email: student.user?.email || '',
       password: '', // Password optional for edit
@@ -501,16 +513,29 @@ export function AdminStudents() {
                 <label htmlFor="add-password" className="text-sm text-gray-700">
                   Password {selectedStudent && '(leave blank to keep current)'}
                 </label>
-                <input
-                  type="password"
-                  id="add-password"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                  value={form.password}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, password: e.target.value }))
-                  }
-                  required={!selectedStudent}
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    id="add-password"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 pr-10"
+                    value={form.password}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, password: e.target.value }))
+                    }
+                    required={!selectedStudent}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-gray-600 focus:outline-none"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
               </div>
               <div className="space-y-1">
                 <label htmlFor="add-name" className="text-sm text-gray-700">

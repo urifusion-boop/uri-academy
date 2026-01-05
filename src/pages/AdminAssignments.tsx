@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Plus, Calendar, FileText } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { Plus, Calendar, FileText, Search } from 'lucide-react';
 import { api } from '../services/api';
 import type { Assignment, Cohort } from '../types/schema';
 import { formatDate } from '../utils/date';
@@ -12,6 +12,8 @@ export function AdminAssignments() {
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [search, setSearch] = useState('');
+  const [selectedCohortId, setSelectedCohortId] = useState('');
 
   const [form, setForm] = useState({
     title: '',
@@ -21,25 +23,24 @@ export function AdminAssignments() {
     cohortId: '',
   });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [assignmentsData, cohortsData] = await Promise.all([
         api.assignments.list(),
-        api.cohorts.list({ page: 1, pageSize: 100 }), // Fetch all active cohorts
+        api.cohorts.list({ page: 1, pageSize: 100 }),
       ]);
       setAssignments(assignmentsData);
       setCohorts(cohortsData);
-    } catch (error) {
-      console.error('Failed to fetch data:', error);
+    } catch {
       addToast('Failed to load assignments', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [addToast]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,6 +80,15 @@ export function AdminAssignments() {
     return <div className="p-8 text-center">Loading assignments...</div>;
   }
 
+  const filteredAssignments = assignments.filter((a) => {
+    const matchesSearch =
+      !search ||
+      a.title.toLowerCase().includes(search.toLowerCase()) ||
+      (a.description || '').toLowerCase().includes(search.toLowerCase());
+    const matchesCohort = !selectedCohortId || a.cohortId === selectedCohortId;
+    return matchesSearch && matchesCohort;
+  });
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -95,11 +105,45 @@ export function AdminAssignments() {
         </button>
       </div>
 
+      <div
+        id="search"
+        className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col sm:flex-row gap-4 justify-between items-center mb-6"
+      >
+        <div className="relative w-full sm:w-96">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Search by title or description..."
+            title="Search assignments"
+            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border-transparent focus:bg-white focus:border-brand-500 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 transition-all"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="flex gap-3 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0">
+          <select
+            aria-label="Filter by Cohort"
+            title="Filter by Cohort"
+            className="px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-600 border-none focus:ring-0 cursor-pointer"
+            value={selectedCohortId}
+            onChange={(e) => setSelectedCohortId(e.target.value)}
+          >
+            <option value="">All Cohorts</option>
+            {cohorts.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <div className="grid gap-4">
-        {assignments.map((assignment) => (
+        {filteredAssignments.map((assignment, idx) => (
           <div
             key={assignment.id}
-            className="bg-white p-6 rounded-xl border shadow-sm hover:shadow-md transition-shadow"
+            className="bg-white p-6 rounded-xl border shadow-sm hover:shadow-md transition-shadow animate-slide-up"
+            style={{ animationDelay: `${idx * 0.03}s` }}
           >
             <div className="flex justify-between items-start">
               <div>
@@ -128,7 +172,7 @@ export function AdminAssignments() {
             </div>
           </div>
         ))}
-        {assignments.length === 0 && (
+        {filteredAssignments.length === 0 && (
           <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed">
             <p className="text-gray-500">No assignments found</p>
           </div>
@@ -136,8 +180,8 @@ export function AdminAssignments() {
       </div>
 
       {isCreating && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-slide-up">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
               <h2 className="text-lg font-bold text-gray-900">
                 Create Assignment

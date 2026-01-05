@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom';
 import { Check, HelpCircle, ShieldCheck, Zap } from 'lucide-react';
+import { useState } from 'react';
 
 export function Pricing() {
+  const [isInstallment, setIsInstallment] = useState(false);
+
   return (
     <div className="bg-white">
       {/* Header */}
@@ -76,12 +79,43 @@ export function Pricing() {
                   <div className="inline-block px-3 py-1 bg-brand-800 rounded-full text-brand-300 text-xs font-bold uppercase tracking-wider mb-6">
                     Next Cohort: Jan 14, 2026
                   </div>
-                  <h3 className="text-2xl font-bold mb-2">Standard Tuition</h3>
+
+                  {/* Toggle */}
+                  <div className="flex bg-brand-800 p-1 rounded-lg mb-8 w-fit">
+                    <button
+                      onClick={() => setIsInstallment(false)}
+                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                        !isInstallment
+                          ? 'bg-white text-brand-900 shadow-sm'
+                          : 'text-brand-200 hover:text-white'
+                      }`}
+                    >
+                      Upfront
+                    </button>
+                    <button
+                      onClick={() => setIsInstallment(true)}
+                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                        isInstallment
+                          ? 'bg-white text-brand-900 shadow-sm'
+                          : 'text-brand-200 hover:text-white'
+                      }`}
+                    >
+                      Payment Plan
+                    </button>
+                  </div>
+
+                  <h3 className="text-2xl font-bold mb-2">
+                    {isInstallment ? 'Flexible Payment' : 'Standard Tuition'}
+                  </h3>
                   <div className="flex items-baseline gap-1 mb-1">
-                    <span className="text-5xl font-bold">₦50,000</span>
+                    <span className="text-5xl font-bold">
+                      {isInstallment ? '₦35,000' : '₦30,000'}
+                    </span>
                   </div>
                   <p className="text-brand-300 text-sm mb-8">
-                    One-time payment
+                    {isInstallment
+                      ? '₦20,000 deposit required'
+                      : 'One-time payment'}
                   </p>
 
                   <ul className="space-y-4 mb-8">
@@ -89,6 +123,12 @@ export function Pricing() {
                       <Zap className="w-5 h-5 text-yellow-400" />
                       <span>Limited seats available</span>
                     </li>
+                    {isInstallment && (
+                      <li className="flex items-center gap-3 text-brand-100">
+                        <Check className="w-5 h-5 text-brand-300" />
+                        <span>Split into 2 payments</span>
+                      </li>
+                    )}
                   </ul>
 
                   <Link

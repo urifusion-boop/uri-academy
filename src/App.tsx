@@ -10,6 +10,8 @@ import { Pricing } from './pages/Pricing';
 import { Register } from './pages/Register';
 import { FAQ } from './pages/FAQ';
 import { Contact } from './pages/Contact';
+import { Graduates } from './pages/Graduates';
+import { ForBusinesses } from './pages/ForBusinesses';
 import { Login } from './pages/Login';
 
 import { StudentHome } from './pages/StudentHome';
@@ -31,54 +33,63 @@ import { AdminSubmissions } from './pages/AdminSubmissions';
 import { AdminCertificates } from './pages/AdminCertificates';
 import { AuthHandler } from './components/AuthHandler';
 import { ToastProvider } from './context/ToastContext';
+import { DashboardRedirect } from './components/DashboardRedirect';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 function App() {
   return (
-    <BrowserRouter>
-      <ToastProvider>
-        <AuthHandler />
-        <Routes>
-          {/* Public Routes */}
-          <Route element={<PublicLayout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/program" element={<Program />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/faq" element={<FAQ />} />
-            <Route path="/contact" element={<Contact />} />
-          </Route>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <ToastProvider>
+          <AuthHandler />
+          <Routes>
+            {/* Redirect /dashboard to /student for Paystack callback compatibility */}
+            <Route path="/dashboard" element={<DashboardRedirect />} />
 
-          {/* Auth Routes */}
-          <Route element={<AuthLayout />}>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-          </Route>
+            {/* Public Routes */}
+            <Route element={<PublicLayout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/program" element={<Program />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/graduates" element={<Graduates />} />
+              <Route path="/business" element={<ForBusinesses />} />
+            </Route>
 
-          {/* Student Routes */}
-          <Route path="/student" element={<DashboardLayout />}>
-            <Route index element={<StudentHome />} />
-            <Route path="curriculum" element={<Curriculum />} />
-            <Route path="assignments" element={<Assignments />} />
-            <Route path="attendance" element={<Attendance />} />
-            <Route path="capstone" element={<Capstone />} />
-            <Route path="certificate" element={<Certificate />} />
-            <Route path="grades" element={<MyGrades />} />
-            <Route path="payments" element={<Payments />} />
-            <Route path="settings" element={<Settings />} />
-          </Route>
+            {/* Auth Routes */}
+            <Route element={<AuthLayout />}>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+            </Route>
 
-          {/* Admin Routes */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminHome />} />
-            <Route path="students" element={<AdminStudents />} />
-            <Route path="cohorts" element={<AdminCohorts />} />
-            <Route path="assignments" element={<AdminAssignments />} />
-            <Route path="content" element={<AdminContent />} />
-            <Route path="submissions" element={<AdminSubmissions />} />
-            <Route path="certificates" element={<AdminCertificates />} />
-          </Route>
-        </Routes>
-      </ToastProvider>
-    </BrowserRouter>
+            {/* Student Routes */}
+            <Route path="/student" element={<DashboardLayout />}>
+              <Route index element={<StudentHome />} />
+              <Route path="curriculum" element={<Curriculum />} />
+              <Route path="assignments" element={<Assignments />} />
+              <Route path="attendance" element={<Attendance />} />
+              <Route path="capstone" element={<Capstone />} />
+              <Route path="certificate" element={<Certificate />} />
+              <Route path="grades" element={<MyGrades />} />
+              <Route path="payments" element={<Payments />} />
+              <Route path="settings" element={<Settings />} />
+            </Route>
+
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminHome />} />
+              <Route path="students" element={<AdminStudents />} />
+              <Route path="cohorts" element={<AdminCohorts />} />
+              <Route path="assignments" element={<AdminAssignments />} />
+              <Route path="content" element={<AdminContent />} />
+              <Route path="submissions" element={<AdminSubmissions />} />
+              <Route path="certificates" element={<AdminCertificates />} />
+            </Route>
+          </Routes>
+        </ToastProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

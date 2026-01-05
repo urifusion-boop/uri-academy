@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { CheckCircle, Clock } from 'lucide-react';
 import { api } from '../services/api';
 import type { Assignment, StudentProfile, Submission } from '../types/schema';
@@ -7,6 +7,7 @@ import { useToast } from '../context/ToastContext';
 
 export function Assignments() {
   const { addToast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -20,17 +21,24 @@ export function Assignments() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [assignmentsData, profileData, submissionsData] = await Promise.all([
-          api.assignments.list(),
-          api.getCurrentUserProfile(),
-          api.assignments.getSubmissions().catch(() => []),
-        ]);
+        const [assignmentsData, profileData, submissionsData] =
+          await Promise.all([
+            api.assignments.list(),
+            api.getCurrentUserProfile(),
+            api.assignments.getSubmissions().catch(() => []),
+          ]);
         setAssignments(Array.isArray(assignmentsData) ? assignmentsData : []);
         setProfile(profileData);
         // Merge profile submissions with fetched submissions if needed
         // Ideally api.getSubmissions() returns all submissions for the student
-        if (profileData && Array.isArray(submissionsData) && submissionsData.length > 0) {
-           setProfile(prev => prev ? ({ ...prev, submissions: submissionsData }) : prev);
+        if (
+          profileData &&
+          Array.isArray(submissionsData) &&
+          submissionsData.length > 0
+        ) {
+          setProfile((prev) =>
+            prev ? { ...prev, submissions: submissionsData } : prev
+          );
         }
       } catch (error) {
         console.error('Failed to fetch assignments data:', error);
@@ -54,18 +62,85 @@ export function Assignments() {
     setUploadStatus('');
   };
 
+  const uploadFile = async (fileToUpload: File): Promise<string | null> => {
+    try {
+      setUploadStatus('Requesting upload URL...');
+      const resp = (await api.files.upload({
+        fileName: fileToUpload.name,
+        contentType: fileToUpload.type || 'application/octet-stream',
+      })) as { fileRef: string; url: string };
+
+      if (!resp || !resp.fileRef) {
+        setUploadStatus('');
+        addToast('Failed to get upload URL', 'error');
+        return null;
+      }
+
+      setUploadStatus('Uploading...');
+      if (resp.url) {
+        const putRes = await fetch(resp.url, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': fileToUpload.type || 'application/octet-stream',
+          },
+          body: fileToUpload,
+        });
+
+        if (!putRes.ok) {
+          setUploadStatus('');
+          addToast('Upload failed', 'error');
+          return null;
+        }
+      }
+
+      setFileRef(resp.fileRef);
+      setUploadStatus('Uploaded. Ready to submit.');
+      return resp.fileRef;
+    } catch {
+      setUploadStatus('');
+      addToast('Upload error', 'error');
+      return null;
+    }
+  };
+
+  const uploadSelectedFile = async () => {
+    // If no file is selected, trigger the file input
+    if (!file) {
+      fileInputRef.current?.click();
+      return;
+    }
+
+    // If file is selected, proceed with upload
+    await uploadFile(file);
+  };
+
   const submitAssignment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!submittingFor) return;
-    if (!fileRef && !contentURL) {
+
+    let currentFileRef = fileRef;
+
+    // Auto-upload if file selected but not uploaded
+    if (!currentFileRef && file) {
+      setSubmitLoading(true); // Show loading state during upload
+      const uploadedRef = await uploadFile(file);
+      if (!uploadedRef) {
+        setSubmitLoading(false);
+        return; // Upload failed, stop submission
+      }
+      currentFileRef = uploadedRef;
+    }
+
+    if (!currentFileRef && !contentURL) {
       addToast('Provide a content URL or upload a file', 'error');
       return;
     }
+
     try {
       setSubmitLoading(true);
       const res = await api.assignments.createSubmission(submittingFor.id, {
         ...(contentURL ? { contentURL } : {}),
-        ...(fileRef ? { fileRef } : {}),
+        ...(currentFileRef ? { fileRef: currentFileRef } : {}),
       });
       const created = res as Submission | undefined;
       if (profile) {
@@ -100,44 +175,8 @@ export function Assignments() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] || null;
     setFile(f);
+    setFileRef(''); // Clear previous upload ref when new file is selected
     setUploadStatus('');
-  };
-  const uploadSelectedFile = async () => {
-    if (!file) {
-      setUploadStatus('No file selected.');
-      return;
-    }
-    try {
-      setUploadStatus('Requesting upload URL...');
-      const resp = (await api.files.upload({
-        fileName: file.name,
-        contentType: file.type || 'application/octet-stream',
-      })) as { fileRef: string; url: string };
-      if (!resp || !resp.url || !resp.fileRef) {
-        setUploadStatus('');
-        addToast('Failed to get upload URL', 'error');
-        return;
-      }
-      setUploadStatus('Uploading...');
-      const putRes = await fetch(resp.url, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': file.type || 'application/octet-stream',
-        },
-        body: file,
-      });
-      if (!putRes.ok) {
-        setUploadStatus('');
-        addToast('Upload failed', 'error');
-        return;
-      }
-      setFileRef(resp.fileRef);
-      setUploadStatus('Uploaded. Ready to submit.');
-      addToast('File uploaded successfully', 'success');
-    } catch {
-      setUploadStatus('');
-      addToast('Upload error', 'error');
-    }
   };
 
   if (loading) {
@@ -226,7 +265,7 @@ export function Assignments() {
                   placeholder="https://files.example.com/submission.pdf"
                   value={contentURL}
                   onChange={(e) => setContentURL(e.target.value)}
-                  required
+                  required={!fileRef && !file}
                 />
               </div>
               <div className="space-y-1">
@@ -235,20 +274,28 @@ export function Assignments() {
                 </label>
                 <input
                   id="file-input"
+                  ref={fileInputRef}
                   type="file"
-                  className="w-full"
+                  className="w-full hidden"
                   onChange={handleFileSelect}
                 />
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
-                    onClick={uploadSelectedFile}
-                    disabled={!file || submitLoading}
-                    aria-label="Upload selected file"
-                  >
-                    Upload
-                  </button>
+                  <div className="flex-1 flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+                      onClick={uploadSelectedFile}
+                      disabled={submitLoading}
+                      aria-label={file ? 'Upload selected file' : 'Choose file'}
+                    >
+                      {file ? 'Upload' : 'Choose File'}
+                    </button>
+                    {file && (
+                      <span className="text-sm text-gray-600 truncate">
+                        {file.name}
+                      </span>
+                    )}
+                  </div>
                   <span className="text-xs text-gray-500">{uploadStatus}</span>
                 </div>
               </div>

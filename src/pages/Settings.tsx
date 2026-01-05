@@ -9,6 +9,8 @@ import {
   Mail,
   Phone,
   MapPin,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { api } from '../services/api';
 import type { StudentProfile } from '../types/schema';
@@ -35,6 +37,10 @@ export function Settings() {
     newPassword: '',
     confirmPassword: '',
   });
+
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [notificationSettings, setNotificationSettings] = useState({
     courseUpdates: true,
@@ -355,18 +361,33 @@ export function Settings() {
                       >
                         Current Password
                       </label>
-                      <input
-                        id="currentPassword"
-                        type="password"
-                        className="input-field"
-                        value={securityData.currentPassword}
-                        onChange={(e) =>
-                          setSecurityData({
-                            ...securityData,
-                            currentPassword: e.target.value,
-                          })
-                        }
-                      />
+                      <div className="relative">
+                        <input
+                          id="currentPassword"
+                          type={showCurrentPassword ? 'text' : 'password'}
+                          className="input-field pr-10"
+                          value={securityData.currentPassword}
+                          onChange={(e) =>
+                            setSecurityData({
+                              ...securityData,
+                              currentPassword: e.target.value,
+                            })
+                          }
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowCurrentPassword(!showCurrentPassword)
+                          }
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-gray-600 focus:outline-none"
+                        >
+                          {showCurrentPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                     <div>
                       <label
@@ -375,18 +396,31 @@ export function Settings() {
                       >
                         New Password
                       </label>
-                      <input
-                        id="newPassword"
-                        type="password"
-                        className="input-field"
-                        value={securityData.newPassword}
-                        onChange={(e) =>
-                          setSecurityData({
-                            ...securityData,
-                            newPassword: e.target.value,
-                          })
-                        }
-                      />
+                      <div className="relative">
+                        <input
+                          id="newPassword"
+                          type={showNewPassword ? 'text' : 'password'}
+                          className="input-field pr-10"
+                          value={securityData.newPassword}
+                          onChange={(e) =>
+                            setSecurityData({
+                              ...securityData,
+                              newPassword: e.target.value,
+                            })
+                          }
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-gray-600 focus:outline-none"
+                        >
+                          {showNewPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                     <div>
                       <label
@@ -395,18 +429,33 @@ export function Settings() {
                       >
                         Confirm New Password
                       </label>
-                      <input
-                        id="confirmPassword"
-                        type="password"
-                        className="input-field"
-                        value={securityData.confirmPassword}
-                        onChange={(e) =>
-                          setSecurityData({
-                            ...securityData,
-                            confirmPassword: e.target.value,
-                          })
-                        }
-                      />
+                      <div className="relative">
+                        <input
+                          id="confirmPassword"
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          className="input-field pr-10"
+                          value={securityData.confirmPassword}
+                          onChange={(e) =>
+                            setSecurityData({
+                              ...securityData,
+                              confirmPassword: e.target.value,
+                            })
+                          }
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-gray-600 focus:outline-none"
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
 

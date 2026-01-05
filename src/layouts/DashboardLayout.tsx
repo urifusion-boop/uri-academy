@@ -1,4 +1,10 @@
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import {
+  Link,
+  Outlet,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from 'react-router-dom';
 import {
   LayoutDashboard,
   BookOpen,
@@ -7,6 +13,7 @@ import {
   Award,
   GraduationCap,
   CreditCard,
+  Lock,
   LogOut,
   Menu,
   Bell,
@@ -14,11 +21,15 @@ import {
   Settings,
   HelpCircle,
   BarChart3,
+  Loader2,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '../lib/utils';
 import { api } from '../services/api';
 import type { StudentProfile } from '../types/schema';
+import logo from '../assets/image.png';
+import { PaymentSuccessModal } from '../components/PaymentSuccessModal';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 
 const academicItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/student' },
@@ -42,8 +53,54 @@ export function DashboardLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const reference = searchParams.get('reference');
+
+    // If no reference, or already verifying, or success modal is open, do nothing
+    if (!reference || verifying || showSuccessModal) return;
+
+    const handleVerification = async (ref: string) => {
+      setVerifying(true);
+      try {
+        const response = await api.payments.verify(ref);
+        if (response.status === 'PAID' && response.tokens) {
+          // Update tokens
+          localStorage.setItem('token', response.tokens.accessToken);
+          localStorage.setItem('refreshToken', response.tokens.refreshToken);
+
+          // Clear query params using React Router to ensure state consistency
+          setSearchParams({});
+
+          // Show success modal instead of reloading
+          setShowSuccessModal(true);
+
+          // Re-fetch profile to update UI immediately
+          try {
+            await fetchProfile();
+          } catch (e) {
+            console.error('Failed to refresh profile after payment', e);
+          }
+        } else {
+          alert(
+            'Payment verification failed or pending. Please contact support if you have been debited.'
+          );
+        }
+      } catch (error) {
+        console.error('Verification error', error);
+        alert('Payment verification failed. Please try again.');
+      } finally {
+        setVerifying(false);
+      }
+    };
+
+    handleVerification(reference);
+  }, [searchParams, verifying, showSuccessModal, setSearchParams]);
 
   const handleLogout = async () => {
     try {
@@ -58,22 +115,21 @@ export function DashboardLayout() {
     }
   };
 
+  const fetchProfile = async () => {
+    // Debounce or avoid immediate double call if needed, but for now just swallow 429s gracefully
+    try {
+      // Add a small random delay to prevent thundering herd if multiple components mount at once
+      await new Promise((resolve) => setTimeout(resolve, Math.random() * 500));
+      const data = await api.getCurrentUserProfile();
+      setProfile(data);
+      setError(null);
+    } catch (error) {
+      console.error('Failed to fetch profile:', error);
+      setError('Failed to load profile');
+    }
+  };
+
   useEffect(() => {
-    const fetchProfile = async () => {
-      // Debounce or avoid immediate double call if needed, but for now just swallow 429s gracefully
-      try {
-        // Add a small random delay to prevent thundering herd if multiple components mount at once
-        await new Promise((resolve) =>
-          setTimeout(resolve, Math.random() * 500)
-        );
-        const data = await api.getCurrentUserProfile();
-        setProfile(data);
-        setError(null);
-      } catch (error) {
-        console.error('Failed to fetch profile:', error);
-        setError('Failed to load profile');
-      }
-    };
     fetchProfile();
   }, []);
 
@@ -107,8 +163,58 @@ export function DashboardLayout() {
     );
   };
 
+  const isApplicant = profile?.user?.role === 'APPLICANT';
+
+  // Access check:
+  // Strictly based on role. If APPLICANT, restrict access. If STUDENT (or ADMIN), allow access.
+  // We trust the backend to handle the Role upgrade upon payment.
+  const allowedPaths = ['/student/payments', '/student/settings'];
+  const currentPath = location.pathname.replace(/\/+$/, '');
+  const isAllowedPath = allowedPaths.includes(currentPath);
+
+  // If NOT Applicant, allow access (Role-based access)
+  const canAccess = isAllowedPath || !isApplicant;
+
+  // Re-fetch profile on mount if APPLICANT to check for upgrade
+  useEffect(() => {
+    if (profile?.user?.role === 'APPLICANT') {
+      const checkRoleUpgrade = async () => {
+        try {
+          // Force refresh from server
+          const updated = await api.users.getMe();
+          if (updated.role !== 'APPLICANT') {
+            // Reload to update state completely or setProfile
+            window.location.reload();
+          }
+        } catch (e) {
+          console.error('Role check failed', e);
+        }
+      };
+      checkRoleUpgrade();
+    }
+  }, [profile?.user?.role]);
+
+  if (verifying) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+        <Loader2 className="w-12 h-12 text-brand-600 animate-spin mb-4" />
+        <h2 className="text-xl font-bold text-gray-900">
+          Verifying Payment...
+        </h2>
+        <p className="text-gray-500">
+          Please wait while we confirm your transaction.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 flex font-sans">
+    <div className="min-h-screen bg-gray-50 flex">
+      <PaymentSuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+      />
+
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div
@@ -126,9 +232,11 @@ export function DashboardLayout() {
       >
         <div className="h-20 flex items-center px-8 border-b border-gray-50">
           <Link to="/student" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-200 group-hover:scale-105 transition-transform">
-              U
-            </div>
+            <img
+              src={logo}
+              alt="Uri Academy"
+              className="w-10 h-10 rounded-xl shadow-lg shadow-brand-200 group-hover:scale-105 transition-transform object-contain bg-white"
+            />
             <span className="text-xl font-bold text-gray-900 tracking-tight">
               Uri<span className="text-brand-600">Academy</span>
             </span>
@@ -166,7 +274,11 @@ export function DashboardLayout() {
                   {profile?.user?.name || (error ? 'Guest' : 'Loading...')}
                 </p>
                 <p className="text-xs text-gray-500 truncate">
-                  Student Account
+                  {profile?.user?.role === 'ADMIN'
+                    ? 'Admin Account'
+                    : profile?.user?.role === 'STUDENT'
+                    ? 'Student Account'
+                    : 'Applicant Account'}
                 </p>
               </div>
             </div>
@@ -237,8 +349,11 @@ export function DashboardLayout() {
                   {profile?.user?.name || (error ? 'Guest' : 'Loading...')}
                 </p>
                 <p className="text-xs text-brand-600 font-medium bg-brand-50 px-2 py-0.5 rounded-full inline-block">
-                  {profile?.cohort?.name ||
-                    (error ? 'No Cohort' : 'Loading...')}
+                  {profile
+                    ? profile.cohort?.name || 'No Cohort Assigned'
+                    : error
+                    ? 'No Cohort'
+                    : 'Loading...'}
                 </p>
               </div>
             </div>
@@ -246,8 +361,40 @@ export function DashboardLayout() {
         </header>
 
         <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-          <div className="max-w-7xl mx-auto animate-fade-in pb-10">
-            <Outlet />
+          <div className="max-w-7xl mx-auto pb-10">
+            {canAccess ? (
+              <ErrorBoundary>
+                <Outlet context={{ profile, fetchProfile }} />
+              </ErrorBoundary>
+            ) : (
+              <div className="max-w-2xl mx-auto text-center bg-white border border-gray-100 rounded-3xl p-10 shadow-sm">
+                <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
+                  <Lock className="w-8 h-8 text-gray-500" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Access Locked
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  You are currently an APPLICANT. Please pay the tuition fee to
+                  become a STUDENT and unlock all course materials.
+                </p>
+
+                <div className="flex justify-center gap-3">
+                  <Link
+                    to="/student/payments"
+                    className="btn-primary px-6 py-3 rounded-lg font-bold"
+                  >
+                    Go to Payments
+                  </Link>
+                  <Link
+                    to="/contact"
+                    className="px-6 py-3 bg-white text-gray-700 font-bold rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                  >
+                    Need Help?
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </main>
       </div>

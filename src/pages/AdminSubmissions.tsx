@@ -19,7 +19,8 @@ export function AdminSubmissions() {
   useEffect(() => {
     const fetchSubmissions = async () => {
       try {
-        const data = await api.getSubmissions();
+        // Use the admin-specific endpoint to get ALL submissions
+        const data = await api.assignments.getAllSubmissions();
         setSubmissions(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error('Failed to fetch submissions:', error);

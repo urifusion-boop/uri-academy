@@ -1,310 +1,405 @@
 import { Link } from 'react-router-dom';
-import {
-  ArrowRight,
-  CheckCircle,
-  Users,
-  BookOpen,
-  TrendingUp,
-  Calendar,
-  PlayCircle,
-} from 'lucide-react';
+import { useState } from 'react';
+import { PlayCircle } from 'lucide-react';
 
 export function Home() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [form, setForm] = useState({
+    fullName: '',
+    email: '',
+    experience: '',
+  });
+
   return (
     <div className="overflow-hidden">
-      {/* Hero Section */}
-      <section className="relative pt-20 pb-32 overflow-hidden bg-white">
-        {/* Background Elements */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-          <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full bg-brand-50 blur-3xl opacity-60"></div>
-          <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-brand-50 blur-3xl opacity-60"></div>
-        </div>
-
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-50 border border-brand-100 text-brand-700 text-sm font-semibold mb-8 animate-fade-in">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
-              </span>
-              New Cohort Starts January 14th, 2026
-            </div>
-
-            <h1 className="text-5xl lg:text-7xl font-bold text-gray-900 mb-8 leading-tight tracking-tight animate-slide-up">
-              Master the Art of <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-brand-400">
-                Digital Sales
-              </span>
+      <section id="about" className="relative pt-20 pb-24 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto text-center">
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight">
+              Launch your career in tech sales
             </h1>
-
-            <p
-              className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed animate-slide-up"
-              style={{ animationDelay: '0.1s' }}
-            >
-              Launch your career with our AI-powered Digital Sales Assistant
-              program. Learn practical skills, work on real projects, and get
-              hired.
+            <p className="text-xl text-brand-700 mt-4">
+              We find you a job, train you, AND pay you.
             </p>
-
-            <div
-              className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up"
-              style={{ animationDelay: '0.2s' }}
-            >
-              <Link
-                to="/register"
-                className="btn-primary text-lg px-8 py-4 shadow-lg shadow-brand-200 hover:shadow-xl hover:shadow-brand-300 hover:-translate-y-1"
+            <p className="text-lg text-gray-600 mt-6 max-w-3xl mx-auto">
+              The world has enough junior coders. It's starving for people who
+              can actually sell the product. Join the Uri Residency to master
+              modern B2B sales, build a portfolio of closed deals, and unlock
+              remote roles in the African, US & UK market.
+            </p>
+            <div className="mt-10 flex items-center justify-center gap-4">
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="btn-primary px-8 py-4 text-lg shadow-brand-200 hover:shadow-brand-300"
               >
-                Start Learning Now
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Link>
-              <Link
-                to="/program"
-                className="btn-secondary text-lg px-8 py-4 hover:-translate-y-1 hover:shadow-lg"
-              >
-                <PlayCircle className="mr-2 w-5 h-5 text-gray-500" />
-                View Curriculum
-              </Link>
+                Apply Today
+              </button>
+              <a href="#process" className="btn-secondary px-8 py-4 text-lg">
+                <PlayCircle className="mr-2 w-5 h-5" />
+                Learn More
+              </a>
             </div>
+          </div>
+        </div>
+      </section>
 
-            <div
-              className="mt-16 pt-8 border-t border-gray-100 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 text-gray-500 text-sm font-medium animate-fade-in"
-              style={{ animationDelay: '0.3s' }}
-            >
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                <span>Certified Program</span>
+      <section aria-label="trust" className="py-6 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <p className="text-center text-gray-600 font-medium">
+            Graduates prepared for roles at
+          </p>
+        </div>
+      </section>
+
+      <section id="process" className="py-24 bg-white">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 text-center mb-12">
+            How does it work?
+          </h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="p-8 bg-gray-50 rounded-2xl border border-gray-100">
+              <h3 className="text-xl font-bold text-gray-900">The Academy</h3>
+              <p className="text-gray-600 mt-2">
+                Master modern sales psychology and the Uri Tech Stack.
+              </p>
+            </div>
+            <div className="p-8 bg-gray-50 rounded-2xl border border-gray-100">
+              <h3 className="text-xl font-bold text-gray-900">The Residency</h3>
+              <p className="text-gray-600 mt-2">
+                Don't just study. Generate live leads for real companies using
+                Uri. Earn commissions while you learn.
+              </p>
+            </div>
+            <div className="p-8 bg-gray-50 rounded-2xl border border-gray-100">
+              <h3 className="text-xl font-bold text-gray-900">
+                The Deployment
+              </h3>
+              <p className="text-gray-600 mt-2">
+                Top 5% get hired by Uri. The rest get placed with our partner
+                network.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="roadmap" className="py-24 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 text-center mb-12">
+            The Roadmap
+          </h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="p-8 bg-white rounded-2xl border border-gray-100">
+              <p className="text-sm font-semibold text-brand-600">Weeks 1-3</p>
+              <h3 className="text-xl font-bold text-gray-900 mt-2">
+                The Download
+              </h3>
+              <ul className="mt-4 space-y-2 text-gray-600">
+                <li>Deep dive into Cold Email Copywriting</li>
+                <li>Cultural Nuance (Western Markets)</li>
+                <li>CRM Management & Data Hygiene</li>
+                <li>Sales Psychology Fundamentals</li>
+              </ul>
+            </div>
+            <div className="p-8 bg-white rounded-2xl border border-gray-100">
+              <p className="text-sm font-semibold text-brand-600">Weeks 4-5</p>
+              <h3 className="text-xl font-bold text-gray-900 mt-2">
+                Live Fire
+              </h3>
+              <ul className="mt-4 space-y-2 text-gray-600">
+                <li>You are assigned a quota</li>
+                <li>You use Uri to hunt leads</li>
+                <li>You book real meetings</li>
+                <li>Earn your first commissions</li>
+              </ul>
+            </div>
+            <div className="p-8 bg-white rounded-2xl border border-gray-100">
+              <p className="text-sm font-semibold text-brand-600">Week 6+</p>
+              <h3 className="text-xl font-bold text-gray-900 mt-2">
+                Placement
+              </h3>
+              <ul className="mt-4 space-y-2 text-gray-600">
+                <li>Interview preparation</li>
+                <li>Portfolio review & polish</li>
+                <li>Intro to hiring partners</li>
+                <li>Career coaching & support</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="what-is-uri" className="py-24 bg-white">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 text-center mb-12">
+            What You'll Learn
+          </h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="p-8 bg-gray-50 rounded-2xl border border-gray-100">
+              <h3 className="text-xl font-bold text-gray-900">
+                Tech-Stack Fluency
+              </h3>
+              <p className="text-gray-600 mt-2">
+                Mastery of Uri, HubSpot, and LinkedIn Sales Nav. You'll leave
+                knowing the tools that top SDRs use daily.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {[
+                  'Uri Platform',
+                  'HubSpot CRM',
+                  'LinkedIn Sales Navigator',
+                  'Outreach.io',
+                ].map((item) => (
+                  <span
+                    key={item}
+                    className="px-3 py-1 text-xs bg-white border border-gray-200 rounded-full text-gray-700"
+                  >
+                    {item}
+                  </span>
+                ))}
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                <span>Job-Ready Skills</span>
+            </div>
+            <div className="p-8 bg-gray-50 rounded-2xl border border-gray-100">
+              <h3 className="text-xl font-bold text-gray-900">
+                Cultural Camouflage
+              </h3>
+              <p className="text-gray-600 mt-2">
+                How to communicate with US/UK prospects without the "outsider"
+                friction. Master tone, timing, and context.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {[
+                  'Western Communication Styles',
+                  'Time Zone Management',
+                  'Cultural Nuances',
+                  'Email Etiquette',
+                ].map((item) => (
+                  <span
+                    key={item}
+                    className="px-3 py-1 text-xs bg-white border border-gray-200 rounded-full text-gray-700"
+                  >
+                    {item}
+                  </span>
+                ))}
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                <span>Expert Mentors</span>
+            </div>
+            <div className="p-8 bg-gray-50 rounded-2xl border border-gray-100">
+              <h3 className="text-xl font-bold text-gray-900">
+                Real-World Practice
+              </h3>
+              <p className="text-gray-600 mt-2">
+                No simulations. You will prospect real companies and launch full
+                outbound campaigns that generate revenue.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {[
+                  'Live Lead Generation',
+                  'Real Quota Targets',
+                  'Commission Earnings',
+                  'Portfolio Building',
+                ].map((item) => (
+                  <span
+                    key={item}
+                    className="px-3 py-1 text-xs bg-white border border-gray-200 rounded-full text-gray-700"
+                  >
+                    {item}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Grid */}
-      <section className="py-24 bg-gray-50 relative">
+      <section id="graduates" className="py-24 bg-gray-50">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+            Hire Uri Graduates
+          </h2>
+          <Link to="/contact" className="btn-primary mt-6">
+            Browse Graduates
+          </Link>
+        </div>
+      </section>
+
+      <section className="py-24 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16 max-w-2xl mx-auto">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-4 text-gray-900">
-              Why Uri Sales Academy?
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+              We're here to ensure you're successful
             </h2>
-            <p className="text-lg text-gray-600">
-              We bridge the gap between traditional sales and the digital
-              future, equipping you with tools that modern employers demand.
+            <p className="text-gray-600 mt-4">
+              Uri's training platform and sales coaches are here to provide you
+              as much 1:1 personalized training as you need during the first 3
+              months of your career.
             </p>
           </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="mt-12 grid md:grid-cols-3 gap-8">
             {[
-              {
-                icon: <BookOpen className="w-8 h-8" />,
-                title: 'AI-Powered Learning',
-                desc: 'Learn to leverage AI tools like ChatGPT and Jasper to automate outreach and enhance your sales process.',
-              },
-              {
-                icon: <Users className="w-8 h-8" />,
-                title: 'Real-world Projects',
-                desc: "Don't just watch videos. Work on actual sales campaigns and build a portfolio that demonstrates your skills.",
-              },
-              {
-                icon: <TrendingUp className="w-8 h-8" />,
-                title: 'Career Growth',
-                desc: 'Get certified and gain access to our network of hiring partners looking for digital sales talent.',
-              },
-            ].map((feature, i) => (
+              'Within days after our kick off call, Uri promptly provided us with candidates based on our ideal SDR profile. We initially had head count for 1 however were so impressed with 2 candidates Uri had supplied, we ended up hiring both.',
+              "Wouldn't be where I am today without Uri. They opened the door for me to start at an incredible company and gave me a lot of training and mentorship as I transitioned into the role.",
+              'Uri helped me get my foot in the door after graduating from college. Their program taught me the fundamentals of being a successful SDR and how to go beyond. I am truly grateful for all the support they offered.',
+            ].map((q, i) => (
               <div
                 key={i}
-                className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-brand-100 transition-all duration-300 group"
+                className="p-6 bg-gray-50 rounded-2xl border border-gray-100"
               >
-                <div className="w-16 h-16 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-brand-600 group-hover:text-white transition-colors duration-300">
-                  {feature.icon}
-                </div>
-                <h3 className="text-xl font-bold mb-3 text-gray-900">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-600 leading-relaxed">{feature.desc}</p>
+                <p className="text-gray-700">{q}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Target Audience Section */}
-      <section className="py-24 bg-gray-900 text-white overflow-hidden relative">
-        {/* Abstract Shapes */}
-        <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-brand-900 to-transparent opacity-30"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-brand-600 rounded-full blur-[100px] opacity-20"></div>
-
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-            <div>
-              <div className="inline-block px-3 py-1 bg-gray-800 rounded-full text-brand-400 text-sm font-semibold mb-6">
-                Who is this for?
-              </div>
-              <h2 className="text-3xl lg:text-5xl font-bold mb-6 leading-tight">
-                Designed for Ambitious <br />
-                <span className="text-brand-400">Game Changers</span>
-              </h2>
-              <p className="text-gray-400 text-lg mb-8 leading-relaxed">
-                Whether you're starting your career or looking to pivot into
-                tech sales, our curriculum adapts to your goals.
-              </p>
-
-              <div className="space-y-6">
-                {[
-                  'Fresh graduates looking to start a high-growth career',
-                  'Traditional sales professionals wanting to upskill',
-                  'Entrepreneurs who want to master digital sales',
-                  'Anyone interested in the intersection of Sales and AI',
-                ].map((item, i) => (
-                  <div
-                    key={i}
-                    className="flex items-start gap-4 p-4 rounded-xl bg-gray-800/50 border border-gray-700 hover:bg-gray-800 transition-colors"
-                  >
-                    <CheckCircle className="w-6 h-6 text-brand-400 flex-shrink-0 mt-0.5" />
-                    <p className="text-gray-200 font-medium">{item}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-10">
-                <Link
-                  to="/register"
-                  className="inline-flex items-center gap-2 text-brand-400 font-bold hover:text-white transition-colors group"
-                >
-                  Start Your Journey
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </div>
-            </div>
-
-            <div className="relative">
-              <div className="absolute inset-0 bg-brand-600 rounded-3xl rotate-6 opacity-20 scale-95"></div>
-              <div className="relative bg-gray-800 p-10 rounded-3xl border border-gray-700 shadow-2xl">
-                <h3 className="text-2xl font-bold mb-8 text-white">
-                  Program Outcomes
-                </h3>
-                <div className="space-y-8">
-                  <div className="flex gap-4">
-                    <span className="flex-shrink-0 w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center font-bold text-brand-400 border border-gray-600">
-                      1
-                    </span>
-                    <div>
-                      <h4 className="font-bold text-lg text-white mb-1">
-                        Master CRM Tools
-                      </h4>
-                      <p className="text-gray-400 text-sm">
-                        Gain proficiency in HubSpot & Salesforce.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <span className="flex-shrink-0 w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center font-bold text-brand-400 border border-gray-600">
-                      2
-                    </span>
-                    <div>
-                      <h4 className="font-bold text-lg text-white mb-1">
-                        AI-Driven Campaigns
-                      </h4>
-                      <p className="text-gray-400 text-sm">
-                        Create high-converting email sequences using AI.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <span className="flex-shrink-0 w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center font-bold text-brand-400 border border-gray-600">
-                      3
-                    </span>
-                    <div>
-                      <h4 className="font-bold text-lg text-white mb-1">
-                        Personal Branding
-                      </h4>
-                      <p className="text-gray-400 text-sm">
-                        Optimize your LinkedIn profile for inbound leads.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <span className="flex-shrink-0 w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center font-bold text-brand-400 border border-gray-600">
-                      4
-                    </span>
-                    <div>
-                      <h4 className="font-bold text-lg text-white mb-1">
-                        Closing Confidence
-                      </h4>
-                      <p className="text-gray-400 text-sm">
-                        Learn negotiation tactics that actually work.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-24 bg-white">
+      <section className="py-24 bg-gray-900 text-white">
         <div className="container mx-auto px-4">
-          <div className="max-w-5xl mx-auto bg-brand-600 rounded-3xl p-12 md:p-16 text-center text-white relative overflow-hidden shadow-2xl shadow-brand-200">
-            {/* Background patterns */}
-            <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-brand-500 rounded-full opacity-50 blur-3xl"></div>
-            <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-64 h-64 bg-brand-700 rounded-full opacity-50 blur-3xl"></div>
-
-            <div className="relative z-10">
-              <h2 className="text-3xl md:text-5xl font-bold mb-6">
-                Ready to launch your career?
-              </h2>
-              <p className="text-brand-100 text-lg mb-10 max-w-2xl mx-auto">
-                Join the next cohort of the Digital Sales Assistant program.
-                Limited seats available for the October intake.
-              </p>
-
-              <div className="flex flex-col md:flex-row items-center justify-center gap-8 bg-white/10 backdrop-blur-sm p-8 rounded-2xl border border-white/20 max-w-3xl mx-auto mb-10">
-                <div className="text-left">
-                  <p className="text-brand-200 text-sm uppercase tracking-wider font-semibold">
-                    Tuition Fee
-                  </p>
-                  <p className="text-4xl font-bold">₦50,000</p>
-                </div>
-                <div className="h-12 w-px bg-white/20 hidden md:block"></div>
-                <div className="text-left">
-                  <p className="text-brand-200 text-sm uppercase tracking-wider font-semibold">
-                    Duration
-                  </p>
-                  <p className="text-xl font-bold flex items-center gap-2">
-                    <Calendar className="w-5 h-5" /> 4 Weeks
-                  </p>
-                </div>
-                <div className="h-12 w-px bg-white/20 hidden md:block"></div>
-                <Link
-                  to="/register"
-                  className="w-full md:w-auto bg-white text-brand-600 px-8 py-4 rounded-xl font-bold hover:bg-brand-50 transition-colors shadow-lg"
-                >
-                  Secure Your Spot
-                </Link>
-              </div>
-
-              <p className="text-brand-200 text-sm">
-                Need more info?{' '}
-                <Link
-                  to="/program"
-                  className="text-white underline hover:text-brand-100"
-                >
-                  Download syllabus
-                </Link>
-              </p>
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-4xl font-bold">Your career is waiting.</h2>
+            <p className="text-xl mt-2">Your visa is irrelevant.</p>
+            <p className="text-brand-200 mt-6">
+              Join a global cohort of ambitious professionals ready to break
+              into tech sales. Remote roles, real commissions, no boundaries.
+            </p>
+            <div className="mt-8">
+              <Link
+                to="/register"
+                className="btn-primary bg-white text-brand-700 hover:bg-brand-50"
+              >
+                Start Your Application
+              </Link>
             </div>
+            <p className="text-sm text-brand-300 mt-4">
+              Limited spots available for Cohort 1 • Applications close soon
+            </p>
           </div>
         </div>
       </section>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6">
+            {!submitted ? (
+              <>
+                <h3 className="text-xl font-bold text-gray-900">
+                  Apply for Residency
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Join Cohort 1 • Limited spots
+                </p>
+                <form
+                  className="mt-6 space-y-4"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    setSubmitted(true);
+                  }}
+                >
+                  <div>
+                    <label
+                      htmlFor="apply-full-name"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      id="apply-full-name"
+                      title="Full Name"
+                      placeholder="Enter your full name"
+                      className="mt-1 w-full rounded-lg border-gray-300 focus:ring-brand-500 focus:border-brand-500"
+                      value={form.fullName}
+                      onChange={(e) =>
+                        setForm({ ...form, fullName: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="apply-email"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      id="apply-email"
+                      title="Email Address"
+                      placeholder="you@example.com"
+                      className="mt-1 w-full rounded-lg border-gray-300 focus:ring-brand-500 focus:border-brand-500"
+                      value={form.email}
+                      onChange={(e) =>
+                        setForm({ ...form, email: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="apply-experience"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Tell us about your sales experience (if any)
+                    </label>
+                    <textarea
+                      id="apply-experience"
+                      title="Sales Experience"
+                      placeholder="Share a brief summary"
+                      className="mt-1 w-full rounded-lg border-gray-300 focus:ring-brand-500 focus:border-brand-500"
+                      rows={4}
+                      value={form.experience}
+                      onChange={(e) =>
+                        setForm({ ...form, experience: e.target.value })
+                      }
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    By applying, you agree to our terms and conditions. We'll
+                    never share your information.
+                  </p>
+                  <div className="flex items-center justify-end gap-3 pt-2">
+                    <button
+                      type="button"
+                      className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700"
+                      onClick={() => {
+                        setIsModalOpen(false);
+                        setSubmitted(false);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn-primary">
+                      Submit Application
+                    </button>
+                  </div>
+                </form>
+              </>
+            ) : (
+              <div className="text-center">
+                <h3 className="text-xl font-bold text-gray-900">
+                  Application Received!
+                </h3>
+                <p className="text-gray-600 mt-2">
+                  We'll review your application and get back to you within 48
+                  hours.
+                </p>
+                <div className="mt-6">
+                  <button
+                    className="btn-primary"
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      setSubmitted(false);
+                      setForm({ fullName: '', email: '', experience: '' });
+                    }}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

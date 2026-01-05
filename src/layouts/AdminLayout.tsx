@@ -11,9 +11,11 @@ import {
   Menu,
   UserCog,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '../lib/utils';
 import { api } from '../services/api';
+import logo from '../assets/image.png';
+import type { User } from '../types/schema';
 
 const sidebarItems = [
   { icon: LayoutDashboard, label: 'Admin Overview', href: '/admin' },
@@ -27,8 +29,25 @@ const sidebarItems = [
 
 export function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(() => {
+    const storedUser = localStorage.getItem('user');
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await api.users.getMe();
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+      } catch (error) {
+        console.error('Failed to fetch admin user:', error);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -62,9 +81,11 @@ export function AdminLayout() {
       >
         <div className="h-20 flex items-center px-8 border-b border-gray-50">
           <Link to="/admin" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-200 group-hover:scale-105 transition-transform">
-              U
-            </div>
+            <img
+              src={logo}
+              alt="Uri Academy"
+              className="w-10 h-10 rounded-xl shadow-lg shadow-brand-200 group-hover:scale-105 transition-transform object-contain bg-white"
+            />
             <span className="text-xl font-bold text-gray-900 tracking-tight">
               Uri<span className="text-brand-600">Admin</span>
             </span>
@@ -110,13 +131,15 @@ export function AdminLayout() {
           <div className="bg-gray-50 rounded-xl p-4 mb-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-brand-700 font-bold border border-gray-100 shadow-sm">
-                <UserCog className="w-5 h-5" />
+                {user?.initials || <UserCog className="w-5 h-5" />}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-gray-900 truncate">
-                  Admin User
+                  {user?.name || 'Admin User'}
                 </p>
-                <p className="text-xs text-gray-500 truncate">admin@uri.com</p>
+                <p className="text-xs text-gray-500 truncate">
+                  {user?.email || 'admin@uri.com'}
+                </p>
               </div>
             </div>
           </div>
