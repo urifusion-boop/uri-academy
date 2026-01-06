@@ -1,5 +1,6 @@
 import { Link, Outlet } from 'react-router-dom';
 import { CheckCircle } from 'lucide-react';
+import logo from '../assets/image.png';
 
 export function AuthLayout() {
   return (
@@ -9,12 +10,11 @@ export function AuthLayout() {
         <div className="mx-auto w-full max-w-sm lg:w-96">
           <div className="mb-10">
             <Link to="/" className="flex items-center gap-2 group mb-8">
-              <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-200">
-                U
-              </div>
-              <span className="text-2xl font-bold text-gray-900 tracking-tight">
-                Uri<span className="text-brand-600">Academy</span>
-              </span>
+              <img
+                src={logo}
+                alt="Uri Academy"
+                className="h-40 w-auto object-contain group-hover:scale-105 transition-transform"
+              />
             </Link>
           </div>
 

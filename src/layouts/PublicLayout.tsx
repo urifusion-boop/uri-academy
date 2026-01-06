@@ -26,16 +26,13 @@ export function PublicLayout() {
             : 'bg-transparent'
         }`}
       >
-        <div className="container mx-auto px-4 lg:px-8 h-20 flex items-center justify-between">
+        <div className="container mx-auto px-4 lg:px-8 h-32 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
             <img
               src={logo}
               alt="Uri Academy"
-              className="w-10 h-10 rounded-xl shadow-lg shadow-brand-200 group-hover:scale-105 transition-transform object-contain bg-white"
+              className="h-28 w-auto object-contain group-hover:scale-105 transition-transform"
             />
-            <span className="text-2xl font-bold text-gray-900 tracking-tight">
-              Uri<span className="text-brand-600">Academy</span>
-            </span>
           </Link>
 
           {/* Desktop Nav */}
@@ -107,7 +104,7 @@ export function PublicLayout() {
 
         {/* Mobile Nav */}
         {isMenuOpen && (
-          <div className="md:hidden absolute top-20 left-0 w-full bg-white border-b shadow-lg animate-fade-in">
+          <div className="md:hidden absolute top-32 left-0 w-full bg-white border-b shadow-lg animate-fade-in">
             <nav className="flex flex-col p-4 gap-2">
               <Link
                 to="/"
@@ -167,7 +164,7 @@ export function PublicLayout() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-grow pt-20">
+      <main className="flex-grow pt-32">
         <Outlet />
       </main>
 
@@ -180,11 +177,8 @@ export function PublicLayout() {
                 <img
                   src={logo}
                   alt="Uri Academy"
-                  className="w-8 h-8 rounded-lg object-contain bg-white"
+                  className="h-40 w-auto object-contain"
                 />
-                <span className="text-xl font-bold tracking-tight">
-                  Uri<span className="text-brand-400">Academy</span>
-                </span>
               </Link>
               <p className="text-gray-400 text-sm leading-relaxed mb-6">
                 The Human Edge in the Age of AI.
