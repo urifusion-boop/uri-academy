@@ -1,5 +1,5 @@
 import { Link, Outlet } from 'react-router-dom';
-import { Menu, X, Twitter, Linkedin, Instagram } from 'lucide-react';
+import { Menu, X, Linkedin, Instagram } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import logo from '../assets/image.png';
 
@@ -185,10 +185,22 @@ export function PublicLayout() {
               </p>
               <div className="flex gap-4">
                 <a
-                  href="#"
+                  href="https://www.tiktok.com/@uri.sales.academy?_r=1&_t=ZS-92qpGJM1grR"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-brand-600 hover:text-white transition-all"
                 >
-                  <Twitter className="w-4 h-4" />
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-4 h-4"
+                  >
+                    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+                  </svg>
                 </a>
                 <a
                   href="#"
@@ -197,7 +209,9 @@ export function PublicLayout() {
                   <Linkedin className="w-4 h-4" />
                 </a>
                 <a
-                  href="#"
+                  href="https://www.instagram.com/uri.sales.academy?igsh=MXZrZjV2azlyMjU1bQ=="
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-brand-600 hover:text-white transition-all"
                 >
                   <Instagram className="w-4 h-4" />

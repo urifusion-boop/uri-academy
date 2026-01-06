@@ -112,7 +112,7 @@ export function FAQ() {
               Can't find what you're looking for?
             </p>
             <a
-              href="mailto:support@uriacademy.com"
+              href="mailto:uriacademyhq@gmail.com"
               className="inline-flex items-center gap-2 text-brand-600 font-bold hover:underline"
             >
               Contact our Support Team
