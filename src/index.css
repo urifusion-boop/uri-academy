@@ -2,12 +2,17 @@
 
 @plugin "tailwindcss-animate";
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700;800;900&display=swap');
 
 @theme {
-  --font-sans: 'Inter', sans-serif;
+  --font-jakarta: 'Plus Jakarta Sans', sans-serif;
   --font-urbanist: 'Urbanist', system-ui, sans-serif;
+  --font-raleway: 'Raleway', sans-serif;
+  --font-segoue: 'Segoe UI', sans-serif;
+  
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
 
   --color-brand-50: #FBEAF3;
   --color-brand-100: #F6D3E6;
