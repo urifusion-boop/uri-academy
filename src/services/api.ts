@@ -17,8 +17,8 @@ import type {
   Payment,
 } from '../types/schema';
 
-const API_URL = import.meta.env.VITE_API_URL;
-const USE_MOCK = !API_URL;
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+const USE_MOCK = false; // Forced to false as per user instruction
 const DELAY = 500;
 
 // Helper types
