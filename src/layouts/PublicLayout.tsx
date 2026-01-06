@@ -127,6 +127,12 @@ export function PublicLayout() {
               >
                 Pricing
               </Link>
+              <Link
+                to="/contact"
+                className="p-3 text-gray-600 font-medium hover:bg-gray-50 rounded-lg"
+              >
+                Contact
+              </Link>
               <a
                 href="/#process"
                 className="p-3 text-gray-600 font-medium hover:bg-gray-50 rounded-lg"

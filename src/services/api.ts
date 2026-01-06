@@ -18,7 +18,7 @@ import type {
 } from '../types/schema';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
-const USE_MOCK = true; // Temporary fix enabled
+const USE_MOCK = false; // Temporary fix enabled
 const DELAY = 500;
 
 // Helper types

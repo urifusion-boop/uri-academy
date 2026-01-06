@@ -1,14 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import graduate1 from "@/assets/graduate-1.jpg";
 import graduate2 from "@/assets/graduate-2.jpg";
 import graduate3 from "@/assets/graduate-3.jpg";
 import graduate4 from "@/assets/graduate-4.jpg";
-
-interface HeroSectionProps {
-  onApplyClick: () => void;
-}
 
 const graduateSets = [
   [
@@ -21,7 +18,7 @@ const graduateSets = [
   ],
 ];
 
-export const HeroSection = ({ onApplyClick }: HeroSectionProps) => {
+export const HeroSection = () => {
   const [activeSet, setActiveSet] = useState(0);
 
   useEffect(() => {
@@ -80,9 +77,11 @@ export const HeroSection = ({ onApplyClick }: HeroSectionProps) => {
               transition={{ delay: 0.4, duration: 0.6 }}
               className="mt-10"
             >
-              <Button variant="hero" size="xl" onClick={onApplyClick}>
-                Apply Today
-              </Button>
+              <Link to="/register">
+                <Button variant="hero" size="xl">
+                  Apply Today
+                </Button>
+              </Link>
             </motion.div>
           </motion.div>
           

@@ -3,12 +3,9 @@ import { useInView } from "framer-motion";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
-interface CTASectionProps {
-  onApplyClick: () => void;
-}
-
-export const CTASection = ({ onApplyClick }: CTASectionProps) => {
+export const CTASection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -42,14 +39,15 @@ export const CTASection = ({ onApplyClick }: CTASectionProps) => {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="mt-10"
           >
-            <Button 
-              onClick={onApplyClick} 
-              className="group bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-bold text-lg px-8 py-6 h-auto rounded-lg"
-              size="xl"
-            >
-              Start Your Application
-              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-            </Button>
+            <Link to="/register">
+              <Button 
+                className="group bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-bold text-lg px-8 py-6 h-auto rounded-lg"
+                size="xl"
+              >
+                Start Your Application
+                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
           </motion.div>
           
           <motion.p
