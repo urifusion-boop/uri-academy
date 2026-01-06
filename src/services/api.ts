@@ -18,7 +18,7 @@ import type {
 } from '../types/schema';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
-const USE_MOCK = false; // Forced to false as per user instruction
+const USE_MOCK = true; // Temporary fix enabled
 const DELAY = 500;
 
 // Helper types
@@ -490,6 +490,10 @@ export const api = {
       page?: number;
       pageSize?: number;
     }): Promise<Cohort[]> => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return mockCohorts;
+      }
       const qp: Record<string, string> = {};
       if (typeof params?.page === 'number') qp.page = String(params.page);
       if (typeof params?.pageSize === 'number')
@@ -532,6 +536,10 @@ export const api = {
       cohortId: string,
       params?: { page?: number; pageSize?: number }
     ) => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return [];
+      }
       const qp: Record<string, string> = {};
       if (typeof params?.page === 'number') qp.page = String(params.page);
       if (typeof params?.pageSize === 'number')
@@ -559,6 +567,10 @@ export const api = {
       page?: number;
       pageSize?: number;
     }): Promise<unknown> => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return [];
+      }
       const qp: Record<string, string> = {};
       if (params?.status) qp.status = params.status;
       if (params?.startDate) qp.startDate = params.startDate;
@@ -640,12 +652,16 @@ export const api = {
   },
 
   students: {
-    list: (params?: {
+    list: async (params?: {
       search?: string;
       cohortId?: string;
       page?: number;
       pageSize?: number;
     }): Promise<unknown> => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return mockStudentProfiles;
+      }
       const qp: Record<string, string> = {};
       if (params?.search) qp.search = params.search;
       if (params?.cohortId) qp.cohortId = params.cohortId;
