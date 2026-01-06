@@ -55,12 +55,6 @@ export function PublicLayout() {
             >
               Pricing
             </Link>
-            <a
-              href="/#process"
-              className="text-sm font-medium text-gray-600 hover:text-brand-600 transition-colors"
-            >
-              Learn More
-            </a>
             <Link
               to="/business"
               className="text-sm font-medium text-gray-600 hover:text-brand-600 transition-colors"
@@ -130,12 +124,6 @@ export function PublicLayout() {
               >
                 Contact
               </Link>
-              <a
-                href="/#process"
-                className="p-3 text-gray-600 font-medium hover:bg-gray-50 rounded-lg"
-              >
-                Learn More
-              </a>
               <Link
                 to="/business"
                 className="p-3 text-gray-600 font-medium hover:bg-gray-50 rounded-lg"
@@ -229,14 +217,6 @@ export function PublicLayout() {
                   >
                     About
                   </Link>
-                </li>
-                <li>
-                  <a
-                    href="/#process"
-                    className="hover:text-brand-400 transition-colors"
-                  >
-                    Learn More
-                  </a>
                 </li>
                 <li>
                   <Link
