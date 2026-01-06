@@ -1,4 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import { PublicLayout } from './layouts/PublicLayout';
 import { AuthLayout } from './layouts/AuthLayout';
 import { DashboardLayout } from './layouts/DashboardLayout';
@@ -39,16 +43,21 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
-        <ToastProvider>
-          <AuthHandler />
-          <Routes>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ScrollToTop />
+          <ToastProvider>
+            <AuthHandler />
+            <Routes>
             {/* Redirect /dashboard to /student for Paystack callback compatibility */}
             <Route path="/dashboard" element={<DashboardRedirect />} />
 
+            <Route path="/" element={<Home />} />
+
             {/* Public Routes */}
             <Route element={<PublicLayout />}>
-              <Route path="/" element={<Home />} />
               <Route path="/program" element={<Program />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/faq" element={<FAQ />} />
@@ -87,8 +96,9 @@ function App() {
               <Route path="certificates" element={<AdminCertificates />} />
             </Route>
           </Routes>
-        </ToastProvider>
-      </BrowserRouter>
+          </ToastProvider>
+        </BrowserRouter>
+      </TooltipProvider>
     </ErrorBoundary>
   );
 }
