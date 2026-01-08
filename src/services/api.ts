@@ -9,6 +9,11 @@ import type {
 
 const API_URL = 'http://4.221.74.63:8004';
 
+const USE_MOCK = false;
+const DELAY = 1000;
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const FALLBACK_CURRICULUM: CurriculumItem[] = [];
+
 // Helper types
 type ApiPayload = Record<string, unknown>;
 
