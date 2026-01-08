@@ -1088,6 +1088,20 @@ export const api = {
         return fetchClient('/files/upload', { method: 'POST', body });
       }
     },
+    getDownloadUrl: async (fileRef: string) => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return '#';
+      }
+      try {
+        const res = await fetchClient<{ url: string }>(`/api/files/${fileRef}`);
+        return res.url;
+      } catch {
+        // Fallback: try without /api prefix
+        const res = await fetchClient<{ url: string }>(`/files/${fileRef}`);
+        return res.url;
+      }
+    },
   },
 
   payments: {

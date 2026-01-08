@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Check, X, Minus } from 'lucide-react';
+import { Check, X, Minus, Clock } from 'lucide-react';
 import { api } from '../services/api';
-import type { AttendanceLog } from '../types/schema';
+import type { AttendanceLog, AttendanceSession } from '../types/schema';
 import { formatDate } from '../utils/date';
 
 export function Attendance() {
@@ -13,20 +13,60 @@ export function Attendance() {
       try {
         const profile = await api.getCurrentUserProfile();
         if (profile?.id) {
+          // Fetch logs
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data: any = await api.attendance.getLogs({
+          const logsData: any = await api.attendance.getLogs({
             studentId: profile.id,
           });
-          // Handle potential paginated response or direct array
-          const items = Array.isArray(data)
-            ? data
-            : data && Array.isArray(data.items)
-            ? data.items
+          const logsItems: AttendanceLog[] = Array.isArray(logsData)
+            ? logsData
+            : logsData && Array.isArray(logsData.items)
+            ? logsData.items
             : [];
-          setLogs(items);
+
+          // Fetch sessions if cohortId exists
+          let sessionsItems: AttendanceSession[] = [];
+          if (profile.cohortId) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const sessionsData: any = await api.attendance.getSessions({
+              cohortId: profile.cohortId,
+              pageSize: 100, // Fetch enough
+            });
+            sessionsItems = Array.isArray(sessionsData)
+              ? sessionsData
+              : sessionsData && Array.isArray(sessionsData.items)
+              ? sessionsData.items
+              : [];
+          }
+
+          // Merge: Map sessions to logs
+          // If a session has a log, use it. If not, create a placeholder log with 'PENDING' status
+          const combinedLogs = sessionsItems.map((session) => {
+            const foundLog = logsItems.find((l) => l.sessionId === session.id);
+            if (foundLog) {
+              // Ensure session details are attached if missing in log
+              return { ...foundLog, session: session };
+            }
+            return {
+              id: `placeholder-${session.id}`,
+              sessionId: session.id,
+              session: session,
+              studentId: profile.id,
+              status: 'PENDING',
+            } as unknown as AttendanceLog;
+          });
+
+          // Sort by date desc
+          combinedLogs.sort(
+            (a, b) =>
+              new Date(b.session?.date || 0).getTime() -
+              new Date(a.session?.date || 0).getTime()
+          );
+
+          setLogs(combinedLogs);
         }
       } catch (error) {
-        console.error('Failed to fetch attendance logs:', error);
+        console.error('Failed to fetch attendance data:', error);
       } finally {
         setLoading(false);
       }
@@ -83,6 +123,11 @@ export function Attendance() {
                     {log.status === 'LATE' && (
                       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                         <Minus className="w-3 h-3" /> Late
+                      </span>
+                    )}
+                    {(log.status as string) === 'PENDING' && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                        <Clock className="w-3 h-3" /> Pending
                       </span>
                     )}
                   </td>

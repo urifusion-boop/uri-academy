@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Eye, CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, FileText, Link as LinkIcon } from 'lucide-react';
 import { api } from '../services/api';
 import type { Submission } from '../types/schema';
 import { formatDate } from '../utils/date';
@@ -31,11 +31,43 @@ export function AdminSubmissions() {
     fetchSubmissions();
   }, []);
 
-  const handleView = (submission: Submission) => {
-    const url = submission.contentURL;
-    if (url) {
-      window.open(url, '_blank');
+  const handleView = async (submission: Submission) => {
+    if (submission.contentURL) {
+      window.open(submission.contentURL, '_blank');
+      return;
     }
+
+    if (submission.fileRef) {
+      // Open window immediately to avoid popup blockers
+      const newWindow = window.open('', '_blank');
+
+      if (!newWindow) {
+        addToast('Popup blocked. Please allow popups for this site.', 'error');
+        return;
+      }
+
+      newWindow.document.write(
+        '<html><body style="font-family: sans-serif; padding: 20px;"><p>Loading file...</p></body></html>'
+      );
+      newWindow.document.close();
+
+      try {
+        const url = await api.files.getDownloadUrl(submission.fileRef);
+        if (url) {
+          newWindow.location.href = url;
+        } else {
+          newWindow.close();
+          addToast('Could not get download URL', 'error');
+        }
+      } catch (error) {
+        newWindow.close();
+        console.error('Failed to get download URL:', error);
+        addToast('Failed to open file', 'error');
+      }
+      return;
+    }
+
+    addToast('No content to view', 'info');
   };
 
   const openApprove = (submission: Submission) => {
@@ -110,7 +142,15 @@ export function AdminSubmissions() {
           >
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 font-bold">
-                {submission.student?.user?.initials || '??'}
+                {submission.student?.user?.initials ||
+                  (submission.student?.user?.name
+                    ? submission.student.user.name
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')
+                        .toUpperCase()
+                        .slice(0, 2)
+                    : 'ST')}
               </div>
               <div>
                 <h3 className="font-bold text-gray-900">
@@ -141,11 +181,16 @@ export function AdminSubmissions() {
               <button
                 type="button"
                 className="p-2 text-gray-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
-                title="View"
+                title={submission.fileRef ? 'View File' : 'View Link'}
                 aria-label="View submission"
                 onClick={() => handleView(submission)}
+                disabled={!submission.contentURL && !submission.fileRef}
               >
-                <Eye className="w-5 h-5" />
+                {submission.fileRef ? (
+                  <FileText className="w-5 h-5" />
+                ) : (
+                  <LinkIcon className="w-5 h-5" />
+                )}
               </button>
               <button
                 type="button"
