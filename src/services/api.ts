@@ -7,7 +7,7 @@ import type {
   Submission,
 } from '../types/schema';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+const API_URL = 'http://4.221.74.63:8004';
 
 // Helper types
 type ApiPayload = Record<string, unknown>;
