@@ -39,6 +39,58 @@ export interface AdminTask {
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const FALLBACK_CURRICULUM: CurriculumItem[] = [
+  {
+    id: 'week-1',
+    week: 1,
+    title: 'The Blueprint: Sales, People & Money',
+    description:
+      'Shifting from a graduate mindset to a Revenue Engineer. Why people buy and the cultural nuance of selling in Western vs African markets.',
+    durationMinutes: 120,
+    orderIndex: 1,
+    topics: [
+      'Sales Psychology Fundamentals',
+      'Cultural Nuance: Western vs African Markets',
+      'ICP & Persona Mapping',
+      'Lead Sourcing & Data Hygiene',
+      'Cold Email Copywriting',
+    ],
+    icon: 'BookOpen',
+  },
+  {
+    id: 'week-2',
+    week: 2,
+    title: 'The Build: Conversations, Systems & Tools',
+    description:
+      'Transitioning from theory to active hunting. Set up your digital cockpit with pipeline stages, sequencing, and reporting.',
+    durationMinutes: 120,
+    orderIndex: 2,
+    topics: [
+      'CRM Management & Sequencing',
+      'The Discovery Framework',
+      'Inbound vs Outbound Cadences',
+      'Quota Challenge: Hunt and Book Meetings',
+    ],
+    icon: 'Target',
+  },
+  {
+    id: 'week-3',
+    week: 3,
+    title: 'Placement: Closing, Capstone & Career Readiness',
+    description:
+      'Execute a full outbound campaign, deliver a demo pitch, and prepare for interviews with a proof-of-work portfolio.',
+    durationMinutes: 120,
+    orderIndex: 3,
+    topics: [
+      'Capstone Campaign & Demo Pitch',
+      'Portfolio Review & Polish',
+      'Interview Preparation & Roleplay',
+      'Hiring Partner Introductions',
+    ],
+    icon: 'Trophy',
+  },
+];
+
 async function fetchClient<T>(
   endpoint: string,
   options?: RequestInit & { skipAuth?: boolean }
@@ -519,12 +571,62 @@ export const api = {
       fetchClient(`/api/cohorts/${id}`, { method: 'DELETE' }),
   },
 
+  curriculum: {
+    list: async () => api.getCurriculum(),
+    create: (data: ApiPayload) =>
+      fetchClient('/api/curriculum', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    update: (id: string, data: ApiPayload) =>
+      fetchClient(`/api/curriculum/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    delete: (id: string) =>
+      fetchClient(`/api/curriculum/${id}`, { method: 'DELETE' }),
+    seed: async () => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return { success: true };
+      }
+      // Iterate and create each fallback item
+      // We strip the ID so the backend generates a real UUID
+      // The backend's new logic will find these by week/orderIndex
+      const results = [];
+      for (const item of FALLBACK_CURRICULUM) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id, ...payload } = item;
+        try {
+          const res = await api.curriculum.create(payload as ApiPayload);
+          results.push(res);
+        } catch (e) {
+          console.error(`Failed to seed week ${item.week}`, e);
+        }
+      }
+      return results;
+    },
+  },
+
   content: {
     create: (data: ApiPayload) =>
       fetchClient('/api/content', {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+    listByCurriculumItem: async (curriculumItemId: string) => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return [];
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response = await fetchClient<any>(
+        `/api/curriculum/${curriculumItemId}/content`
+      );
+      if (Array.isArray(response)) return response;
+      if (response && Array.isArray(response.items)) return response.items;
+      return [];
+    },
     update: (id: string, data: ApiPayload) =>
       fetchClient(`/api/content/${id}`, {
         method: 'PATCH',
@@ -532,6 +634,27 @@ export const api = {
       }),
     delete: (id: string) =>
       fetchClient(`/api/content/${id}`, { method: 'DELETE' }),
+    seedCurriculum: async () => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return { success: true };
+      }
+      // Try to seed via backend endpoint
+      // We send the fallback curriculum as the desired state
+      try {
+        // Try generic seed endpoint first if it exists
+        return await fetchClient('/api/seed', {
+          method: 'POST',
+          body: JSON.stringify({ curriculum: FALLBACK_CURRICULUM }),
+        });
+      } catch {
+        // Try specific curriculum seed
+        return fetchClient('/api/curriculum/seed', {
+          method: 'POST',
+          body: JSON.stringify({ items: FALLBACK_CURRICULUM }),
+        });
+      }
+    },
     listByCohort: async (
       cohortId: string,
       params?: { page?: number; pageSize?: number }
@@ -840,9 +963,14 @@ export const api = {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const response = await fetchClient<any>('/api/curriculum');
-        if (Array.isArray(response)) return response;
-        if (response && Array.isArray(response.items)) return response.items;
-        return [];
+        if (Array.isArray(response) && response.length > 0) return response;
+        if (
+          response &&
+          Array.isArray(response.items) &&
+          response.items.length > 0
+        )
+          return response.items;
+        return FALLBACK_CURRICULUM.sort((a, b) => a.orderIndex - b.orderIndex);
       } catch (error) {
         console.warn(
           'API /curriculum failed, checking alternatives or falling back',
@@ -858,9 +986,7 @@ export const api = {
           // ignore
         }
 
-        // If real API fails, we must throw or return empty if we want to avoid mock data strictly.
-        // However, usually we fallback to empty array if no data.
-        return [];
+        return FALLBACK_CURRICULUM.sort((a, b) => a.orderIndex - b.orderIndex);
       }
     }
     await delay(DELAY);

@@ -1,29 +1,107 @@
-import { Video, ChevronDown, ChevronRight, Lock, Clock } from 'lucide-react';
+import {
+  Video,
+  ChevronDown,
+  ChevronRight,
+  Lock,
+  Clock,
+  FileText,
+  Link as LinkIcon,
+  CheckCircle,
+  Circle,
+} from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import type { CurriculumItem, StudentProfile } from '../types/schema';
+import type {
+  CurriculumItem,
+  StudentProfile,
+  ContentAsset,
+} from '../types/schema';
 
 export function Curriculum() {
-  const [expandedWeek, setExpandedWeek] = useState<number | null>(null);
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   const [curriculum, setCurriculum] = useState<CurriculumItem[]>([]);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [resources, setResources] = useState<Record<string, ContentAsset[]>>(
+    {}
+  );
+  const [filter, setFilter] = useState<'ALL' | 'VIDEO' | 'DOC' | 'LINK'>('ALL');
+  const [completedContent, setCompletedContent] = useState<Set<string>>(
+    new Set()
+  );
+
+  // Load completed content
+  useEffect(() => {
+    if (profile?.id) {
+      try {
+        const stored = localStorage.getItem(`completed_content_${profile.id}`);
+        if (stored) {
+          setCompletedContent(new Set(JSON.parse(stored)));
+        }
+      } catch (e) {
+        console.warn('Failed to load completed content', e);
+      }
+    }
+  }, [profile?.id]);
+
+  // Pre-fetch all resources to show counts
+  useEffect(() => {
+    if (curriculum.length === 0) return;
+
+    const fetchAll = async () => {
+      const promises = curriculum.map(async (week) => {
+        try {
+          const items = await api.content.listByCurriculumItem(week.id);
+          return { id: week.id, items };
+        } catch {
+          return { id: week.id, items: [] };
+        }
+      });
+
+      const results = await Promise.all(promises);
+      setResources((prev) => {
+        const next = { ...prev };
+        results.forEach((r) => {
+          next[r.id] = r.items;
+        });
+        return next;
+      });
+    };
+
+    fetchAll();
+  }, [curriculum]);
+
+  const toggleComplete = (contentId: string) => {
+    setCompletedContent((prev) => {
+      const next = new Set(prev);
+      if (next.has(contentId)) {
+        next.delete(contentId);
+      } else {
+        next.add(contentId);
+      }
+      if (profile?.id) {
+        localStorage.setItem(
+          `completed_content_${profile.id}`,
+          JSON.stringify([...next])
+        );
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [curriculumData, profileData] = await Promise.all([
-          api.getCurriculum(),
-          api.getCurrentUserProfile(),
-        ]);
+        const curriculumData = await api.getCurriculum();
         setCurriculum(curriculumData);
-        setProfile(profileData);
-        if (curriculumData.length > 0) {
-          // Default expand current week or first week
-          setExpandedWeek(curriculumData[0].week);
-        }
       } catch (error) {
         console.error('Failed to fetch curriculum:', error);
+      }
+      try {
+        const profileData = await api.getCurrentUserProfile();
+        setProfile(profileData);
+      } catch (error) {
+        console.error('Failed to get current user profile', error);
       } finally {
         setLoading(false);
       }
@@ -31,20 +109,36 @@ export function Curriculum() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const loadResources = async () => {
+      if (!expandedItemId) return;
+      if (resources[expandedItemId]) return;
+      try {
+        const items = await api.content.listByCurriculumItem(expandedItemId);
+        setResources((prev) => ({ ...prev, [expandedItemId]: items || [] }));
+      } catch {
+        setResources((prev) => ({ ...prev, [expandedItemId]: [] }));
+      }
+    };
+    loadResources();
+  }, [expandedItemId]);
+
   if (loading) {
     return <div className="p-8 text-center">Loading curriculum...</div>;
   }
 
-  // Calculate stats based on profile progress
-  // Note: Backend should ideally provide granular progress per module.
-  // Using global progress for now.
-  const overallProgress = profile?.progress || 0;
-  const totalLessons = curriculum.reduce(
-    (acc, week) => acc + (week.topics?.length || 0),
+  // Calculate stats based on loaded resources and local completion state
+  const totalLessons = Object.values(resources).reduce(
+    (acc, items) => acc + items.length,
     0
   );
-  // Estimate completed lessons based on progress %
-  const completedLessons = Math.round((overallProgress / 100) * totalLessons);
+
+  const completedLessons = Object.values(resources).reduce((acc, items) => {
+    return acc + items.filter((item) => completedContent.has(item.id)).length;
+  }, 0);
+
+  const overallProgress =
+    totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
@@ -115,10 +209,11 @@ export function Curriculum() {
                 }`}
               >
                 <button
+                  type="button"
                   onClick={() =>
                     !isLocked &&
-                    setExpandedWeek(
-                      expandedWeek === week.week ? null : week.week
+                    setExpandedItemId(
+                      expandedItemId === week.id ? null : week.id
                     )
                   }
                   disabled={isLocked}
@@ -148,13 +243,13 @@ export function Curriculum() {
                           mins
                         </span>
                         <span>•</span>
-                        <span>{week.topics?.length || 0} Lessons</span>
+                        <span>{resources[week.id]?.length || 0} Lessons</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4">
-                    {expandedWeek === week.week ? (
+                    {expandedItemId === week.id ? (
                       <ChevronDown className="w-5 h-5 text-gray-400" />
                     ) : (
                       <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -162,41 +257,137 @@ export function Curriculum() {
                   </div>
                 </button>
 
-                {expandedWeek === week.week && !isLocked && (
+                {expandedItemId === week.id && !isLocked && (
                   <div className="border-t border-gray-100">
-                    {week.topics?.map((topic, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-4 px-6 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 group cursor-pointer"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div
-                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors border-gray-300 group-hover:border-brand-400`}
-                          >
-                            {/* Checkmark if completed */}
-                          </div>
-
-                          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-brand-50 text-brand-600">
-                            <Video className="w-5 h-5" />
-                          </div>
-
-                          <div>
-                            <span className="font-medium block text-gray-900">
-                              {topic}
-                            </span>
-                          </div>
-                        </div>
-
-                        <button className="px-4 py-2 rounded-lg text-sm font-medium transition-all bg-brand-600 text-white hover:bg-brand-700 shadow-sm hover:shadow-brand-200">
-                          Start
+                    <div className="p-4">
+                      <div className="flex items-center gap-2 mb-4">
+                        <button
+                          type="button"
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${
+                            filter === 'ALL'
+                              ? 'bg-brand-600 text-white border-brand-600'
+                              : 'bg-white text-gray-700 border-gray-200'
+                          }`}
+                          onClick={() => setFilter('ALL')}
+                        >
+                          All
+                        </button>
+                        <button
+                          type="button"
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${
+                            filter === 'VIDEO'
+                              ? 'bg-brand-600 text-white border-brand-600'
+                              : 'bg-white text-gray-700 border-gray-200'
+                          }`}
+                          onClick={() => setFilter('VIDEO')}
+                        >
+                          Video
+                        </button>
+                        <button
+                          type="button"
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${
+                            filter === 'DOC'
+                              ? 'bg-brand-600 text-white border-brand-600'
+                              : 'bg-white text-gray-700 border-gray-200'
+                          }`}
+                          onClick={() => setFilter('DOC')}
+                        >
+                          Docs
+                        </button>
+                        <button
+                          type="button"
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${
+                            filter === 'LINK'
+                              ? 'bg-brand-600 text-white border-brand-600'
+                              : 'bg-white text-gray-700 border-gray-200'
+                          }`}
+                          onClick={() => setFilter('LINK')}
+                        >
+                          Links
                         </button>
                       </div>
-                    ))}
-                    {(!week.topics || week.topics.length === 0) && (
-                      <div className="p-6 text-center text-gray-500 text-sm">
-                        No content available for this week yet.
-                      </div>
-                    )}
+                      {(resources[week.id] || [])
+                        .filter((r) => filter === 'ALL' || r.type === filter)
+                        .map((r) => (
+                          <div
+                            key={r.id}
+                            className="flex items-center justify-between p-4 px-6 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 group"
+                          >
+                            <div className="flex items-center gap-4 flex-1">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleComplete(r.id);
+                                }}
+                                className={`text-gray-400 hover:text-brand-600 transition-colors ${
+                                  completedContent.has(r.id)
+                                    ? 'text-green-500 hover:text-green-600'
+                                    : ''
+                                }`}
+                                title={
+                                  completedContent.has(r.id)
+                                    ? 'Mark as incomplete'
+                                    : 'Mark as done'
+                                }
+                              >
+                                {completedContent.has(r.id) ? (
+                                  <CheckCircle className="w-5 h-5" />
+                                ) : (
+                                  <Circle className="w-5 h-5" />
+                                )}
+                              </button>
+
+                              <a
+                                href={r.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-4 flex-1"
+                              >
+                                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-brand-50 text-brand-600">
+                                  {r.type === 'VIDEO' ? (
+                                    <Video className="w-5 h-5" />
+                                  ) : r.type === 'DOC' ? (
+                                    <FileText className="w-5 h-5" />
+                                  ) : (
+                                    <LinkIcon className="w-5 h-5" />
+                                  )}
+                                </div>
+                                <div>
+                                  <span
+                                    className={`font-medium block ${
+                                      completedContent.has(r.id)
+                                        ? 'text-gray-500 line-through'
+                                        : 'text-gray-900'
+                                    }`}
+                                  >
+                                    {r.title}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    {r.type}
+                                  </span>
+                                </div>
+                              </a>
+                            </div>
+
+                            <a
+                              href={r.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-brand-600 text-sm font-semibold hover:underline ml-4"
+                            >
+                              Open
+                            </a>
+                          </div>
+                        ))}
+                      {(!resources[week.id] ||
+                        resources[week.id].filter(
+                          (r) => filter === 'ALL' || r.type === filter
+                        ).length === 0) && (
+                        <div className="p-6 text-center text-gray-500 text-sm">
+                          No resources yet.
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

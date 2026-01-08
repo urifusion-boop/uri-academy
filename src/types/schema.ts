@@ -219,6 +219,7 @@ export interface ContentAsset {
   title: string;
   type: ContentType;
   url: string;
+  curriculumItemId?: string | null;
   cohortId?: string | null;
   cohort?: Cohort;
   publishedAt?: string | null; // ISO Date
