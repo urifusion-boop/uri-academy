@@ -1,5 +1,5 @@
 import { Link, Outlet } from 'react-router-dom';
-import { Menu, X, Twitter, Linkedin, Instagram } from 'lucide-react';
+import { Menu, X, Linkedin, Instagram } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import logo from '../assets/image.png';
 
@@ -26,16 +26,13 @@ export function PublicLayout() {
             : 'bg-transparent'
         }`}
       >
-        <div className="container mx-auto px-4 lg:px-8 h-20 flex items-center justify-between">
+        <div className="container mx-auto px-4 lg:px-8 h-32 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
             <img
               src={logo}
               alt="Uri Academy"
-              className="w-10 h-10 rounded-xl shadow-lg shadow-brand-200 group-hover:scale-105 transition-transform object-contain bg-white"
+              className="h-28 w-auto object-contain group-hover:scale-105 transition-transform"
             />
-            <span className="text-2xl font-bold text-gray-900 tracking-tight">
-              Uri<span className="text-brand-600">Academy</span>
-            </span>
           </Link>
 
           {/* Desktop Nav */}
@@ -58,12 +55,6 @@ export function PublicLayout() {
             >
               Pricing
             </Link>
-            <a
-              href="/#process"
-              className="text-sm font-medium text-gray-600 hover:text-brand-600 transition-colors"
-            >
-              Learn More
-            </a>
             <Link
               to="/business"
               className="text-sm font-medium text-gray-600 hover:text-brand-600 transition-colors"
@@ -107,7 +98,7 @@ export function PublicLayout() {
 
         {/* Mobile Nav */}
         {isMenuOpen && (
-          <div className="md:hidden absolute top-20 left-0 w-full bg-white border-b shadow-lg animate-fade-in">
+          <div className="md:hidden absolute top-32 left-0 w-full bg-white border-b shadow-lg animate-fade-in">
             <nav className="flex flex-col p-4 gap-2">
               <Link
                 to="/"
@@ -127,12 +118,12 @@ export function PublicLayout() {
               >
                 Pricing
               </Link>
-              <a
-                href="/#process"
+              <Link
+                to="/contact"
                 className="p-3 text-gray-600 font-medium hover:bg-gray-50 rounded-lg"
               >
-                Learn More
-              </a>
+                Contact
+              </Link>
               <Link
                 to="/business"
                 className="p-3 text-gray-600 font-medium hover:bg-gray-50 rounded-lg"
@@ -161,7 +152,7 @@ export function PublicLayout() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-grow pt-20">
+      <main className="flex-grow pt-32">
         <Outlet />
       </main>
 
@@ -174,21 +165,30 @@ export function PublicLayout() {
                 <img
                   src={logo}
                   alt="Uri Academy"
-                  className="w-8 h-8 rounded-lg object-contain bg-white"
+                  className="h-40 w-auto object-contain"
                 />
-                <span className="text-xl font-bold tracking-tight">
-                  Uri<span className="text-brand-400">Academy</span>
-                </span>
               </Link>
               <p className="text-gray-400 text-sm leading-relaxed mb-6">
                 The Human Edge in the Age of AI.
               </p>
               <div className="flex gap-4">
                 <a
-                  href="#"
+                  href="https://www.tiktok.com/@uri.sales.academy?_r=1&_t=ZS-92qpGJM1grR"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-brand-600 hover:text-white transition-all"
                 >
-                  <Twitter className="w-4 h-4" />
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-4 h-4"
+                  >
+                    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+                  </svg>
                 </a>
                 <a
                   href="#"
@@ -197,7 +197,9 @@ export function PublicLayout() {
                   <Linkedin className="w-4 h-4" />
                 </a>
                 <a
-                  href="#"
+                  href="https://www.instagram.com/uri.sales.academy?igsh=MXZrZjV2azlyMjU1bQ=="
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-brand-600 hover:text-white transition-all"
                 >
                   <Instagram className="w-4 h-4" />
@@ -215,14 +217,6 @@ export function PublicLayout() {
                   >
                     About
                   </Link>
-                </li>
-                <li>
-                  <a
-                    href="/#process"
-                    className="hover:text-brand-400 transition-colors"
-                  >
-                    Learn More
-                  </a>
                 </li>
                 <li>
                   <Link

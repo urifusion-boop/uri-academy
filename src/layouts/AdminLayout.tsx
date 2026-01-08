@@ -79,16 +79,13 @@ export function AdminLayout() {
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         )}
       >
-        <div className="h-20 flex items-center px-8 border-b border-gray-50">
+        <div className="h-28 flex items-center px-8 border-b border-gray-50">
           <Link to="/admin" className="flex items-center gap-3 group">
             <img
               src={logo}
               alt="Uri Academy"
-              className="w-10 h-10 rounded-xl shadow-lg shadow-brand-200 group-hover:scale-105 transition-transform object-contain bg-white"
+              className="h-24 w-auto object-contain group-hover:scale-105 transition-transform"
             />
-            <span className="text-xl font-bold text-gray-900 tracking-tight">
-              Uri<span className="text-brand-600">Admin</span>
-            </span>
           </Link>
         </div>
 

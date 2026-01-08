@@ -1,36 +1,27 @@
-import { useState } from "react";
-import { Navbar } from "@/components/Navbar";
-import { HeroSection } from "@/components/HeroSection";
-import { TrustBar } from "@/components/TrustBar";
-import { ProcessSection } from "@/components/ProcessSection";
-import { RoadmapSection } from "@/components/RoadmapSection";
-import { CurriculumSection } from "@/components/CurriculumSection";
-import { GraduatesRosterSection } from "@/components/GraduatesRosterSection";
-import { TestimonialsSection } from "@/components/TestimonialsSection";
-import { CTASection } from "@/components/CTASection";
-import { Footer } from "@/components/Footer";
-import { ApplicationModal } from "@/components/ApplicationModal";
+import { HeroSection } from '@/components/HeroSection';
+import { TrustBar } from '@/components/TrustBar';
+import { ProcessSection } from '@/components/ProcessSection';
+import { RoadmapSection } from '@/components/RoadmapSection';
+import { CurriculumSection } from '@/components/CurriculumSection';
+import { GraduatesRosterSection } from '@/components/GraduatesRosterSection';
+import { TestimonialsSection } from '@/components/TestimonialsSection';
+import { PricingSection } from '@/components/PricingSection';
+import { CTASection } from '@/components/CTASection';
 
 export function Home() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const handleApplyClick = () => {
-    setIsModalOpen(true);
-  };
-
   return (
     <main className="min-h-screen bg-background">
-      <Navbar onApplyClick={handleApplyClick} />
-      <HeroSection onApplyClick={handleApplyClick} />
+      {/* Navbar is handled by PublicLayout */}
+      <HeroSection />
       <TrustBar />
       <ProcessSection />
       <RoadmapSection />
       <CurriculumSection />
       <GraduatesRosterSection />
       <TestimonialsSection />
-      <CTASection onApplyClick={handleApplyClick} />
-      <Footer />
-      <ApplicationModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <PricingSection />
+      <CTASection />
+      {/* Footer is handled by PublicLayout */}
     </main>
   );
 }

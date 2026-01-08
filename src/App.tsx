@@ -54,10 +54,9 @@ function App() {
             {/* Redirect /dashboard to /student for Paystack callback compatibility */}
             <Route path="/dashboard" element={<DashboardRedirect />} />
 
-            <Route path="/" element={<Home />} />
-
             {/* Public Routes */}
             <Route element={<PublicLayout />}>
+              <Route path="/" element={<Home />} />
               <Route path="/program" element={<Program />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/faq" element={<FAQ />} />

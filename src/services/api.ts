@@ -388,12 +388,62 @@ export const api = {
       fetchClient(`/api/cohorts/${id}`, { method: 'DELETE' }),
   },
 
+  curriculum: {
+    list: async () => api.getCurriculum(),
+    create: (data: ApiPayload) =>
+      fetchClient('/api/curriculum', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    update: (id: string, data: ApiPayload) =>
+      fetchClient(`/api/curriculum/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    delete: (id: string) =>
+      fetchClient(`/api/curriculum/${id}`, { method: 'DELETE' }),
+    seed: async () => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return { success: true };
+      }
+      // Iterate and create each fallback item
+      // We strip the ID so the backend generates a real UUID
+      // The backend's new logic will find these by week/orderIndex
+      const results = [];
+      for (const item of FALLBACK_CURRICULUM) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id, ...payload } = item;
+        try {
+          const res = await api.curriculum.create(payload as ApiPayload);
+          results.push(res);
+        } catch (e) {
+          console.error(`Failed to seed week ${item.week}`, e);
+        }
+      }
+      return results;
+    },
+  },
+
   content: {
     create: (data: ApiPayload) =>
       fetchClient('/api/content', {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+    listByCurriculumItem: async (curriculumItemId: string) => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return [];
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response = await fetchClient<any>(
+        `/api/curriculum/${curriculumItemId}/content`
+      );
+      if (Array.isArray(response)) return response;
+      if (response && Array.isArray(response.items)) return response.items;
+      return [];
+    },
     update: (id: string, data: ApiPayload) =>
       fetchClient(`/api/content/${id}`, {
         method: 'PATCH',
@@ -401,6 +451,27 @@ export const api = {
       }),
     delete: (id: string) =>
       fetchClient(`/api/content/${id}`, { method: 'DELETE' }),
+    seedCurriculum: async () => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return { success: true };
+      }
+      // Try to seed via backend endpoint
+      // We send the fallback curriculum as the desired state
+      try {
+        // Try generic seed endpoint first if it exists
+        return await fetchClient('/api/seed', {
+          method: 'POST',
+          body: JSON.stringify({ curriculum: FALLBACK_CURRICULUM }),
+        });
+      } catch {
+        // Try specific curriculum seed
+        return fetchClient('/api/curriculum/seed', {
+          method: 'POST',
+          body: JSON.stringify({ items: FALLBACK_CURRICULUM }),
+        });
+      }
+    },
     listByCohort: async (
       cohortId: string,
       params?: { page?: number; pageSize?: number }
@@ -760,6 +831,20 @@ export const api = {
         return await fetchClient('/api/files/upload', { method: 'POST', body });
       } catch {
         return fetchClient('/files/upload', { method: 'POST', body });
+      }
+    },
+    getDownloadUrl: async (fileRef: string) => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return '#';
+      }
+      try {
+        const res = await fetchClient<{ url: string }>(`/api/files/${fileRef}`);
+        return res.url;
+      } catch {
+        // Fallback: try without /api prefix
+        const res = await fetchClient<{ url: string }>(`/files/${fileRef}`);
+        return res.url;
       }
     },
   },

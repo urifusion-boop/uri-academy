@@ -46,8 +46,12 @@ export function AdminCohorts() {
   const [sessionForm, setSessionForm] = useState({
     date: '',
     topic: '',
-    startTime: '',
-    endTime: '',
+    startHour: '09',
+    startMinute: '00',
+    startAmPm: 'AM',
+    endHour: '10',
+    endMinute: '00',
+    endAmPm: 'AM',
   });
   const [selectedSession, setSelectedSession] =
     useState<AttendanceSession | null>(null);
@@ -140,6 +144,11 @@ export function AdminCohorts() {
       setCreating(false);
     }
   };
+
+  const hours = Array.from({ length: 12 }, (_, i) =>
+    (i + 1).toString().padStart(2, '0')
+  );
+  const minutes = ['00', '15', '30', '45'];
 
   if (loading) {
     return <div className="p-8 text-center">Loading cohorts...</div>;
@@ -499,24 +508,58 @@ export function AdminCohorts() {
             </div>
             <div className="px-6 py-5 space-y-6">
               <form
+                noValidate
                 onSubmit={async (e) => {
                   e.preventDefault();
-                  if (
-                    !sessionForm.date ||
-                    !sessionForm.topic ||
-                    !sessionForm.startTime ||
-                    !sessionForm.endTime
-                  ) {
-                    addToast('All fields are required', 'error');
+                  if (!sessionForm.date || !sessionForm.topic) {
+                    addToast('Date and Topic are required', 'error');
                     return;
                   }
                   try {
                     setAttendanceLoading(true);
+
+                    const convertTo24Hour = (
+                      hour: string,
+                      minute: string,
+                      ampm: string
+                    ) => {
+                      let h = parseInt(hour, 10);
+                      if (ampm === 'PM' && h < 12) h += 12;
+                      if (ampm === 'AM' && h === 12) h = 0;
+                      return `${h.toString().padStart(2, '0')}:${minute}`;
+                    };
+
+                    const startTimeStr = convertTo24Hour(
+                      sessionForm.startHour,
+                      sessionForm.startMinute,
+                      sessionForm.startAmPm
+                    );
+                    const endTimeStr = convertTo24Hour(
+                      sessionForm.endHour,
+                      sessionForm.endMinute,
+                      sessionForm.endAmPm
+                    );
+
+                    const startDateTime = new Date(
+                      `${sessionForm.date}T${startTimeStr}`
+                    );
+                    const endDateTime = new Date(
+                      `${sessionForm.date}T${endTimeStr}`
+                    );
+
+                    if (
+                      isNaN(startDateTime.getTime()) ||
+                      isNaN(endDateTime.getTime())
+                    ) {
+                      addToast('Invalid date or time format', 'error');
+                      return;
+                    }
+
                     await api.attendance.createSession({
                       date: new Date(sessionForm.date).toISOString(),
                       topic: sessionForm.topic,
-                      startTime: new Date(sessionForm.startTime).toISOString(),
-                      endTime: new Date(sessionForm.endTime).toISOString(),
+                      startTime: startDateTime.toISOString(),
+                      endTime: endDateTime.toISOString(),
                       cohortId: attendanceOpenFor.id,
                     });
                     const resp = await api.attendance.getSessions({
@@ -536,8 +579,12 @@ export function AdminCohorts() {
                     setSessionForm({
                       date: '',
                       topic: '',
-                      startTime: '',
-                      endTime: '',
+                      startHour: '09',
+                      startMinute: '00',
+                      startAmPm: 'AM',
+                      endHour: '10',
+                      endMinute: '00',
+                      endAmPm: 'AM',
                     });
                     addToast('Session created successfully', 'success');
                   } catch {
@@ -578,38 +625,119 @@ export function AdminCohorts() {
                     required
                   />
                 </div>
-                <div className="space-y-1">
-                  <label htmlFor="att-start" className="text-sm text-gray-700">
-                    Start Time
-                  </label>
-                  <input
-                    id="att-start"
-                    type="datetime-local"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                    value={sessionForm.startTime}
-                    onChange={(e) =>
-                      setSessionForm((f) => ({
-                        ...f,
-                        startTime: e.target.value,
-                      }))
-                    }
-                    required
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label htmlFor="att-end" className="text-sm text-gray-700">
-                    End Time
-                  </label>
-                  <input
-                    id="att-end"
-                    type="datetime-local"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                    value={sessionForm.endTime}
-                    onChange={(e) =>
-                      setSessionForm((f) => ({ ...f, endTime: e.target.value }))
-                    }
-                    required
-                  />
+                <div className="space-y-1 md:col-span-4 grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm text-gray-700 block mb-1">
+                      Start Time
+                    </label>
+                    <div className="flex gap-2">
+                      <select
+                        aria-label="Start Hour"
+                        className="px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        value={sessionForm.startHour}
+                        onChange={(e) =>
+                          setSessionForm((f) => ({
+                            ...f,
+                            startHour: e.target.value,
+                          }))
+                        }
+                      >
+                        {hours.map((h) => (
+                          <option key={h} value={h}>
+                            {h}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="self-center">:</span>
+                      <select
+                        aria-label="Start Minute"
+                        className="px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        value={sessionForm.startMinute}
+                        onChange={(e) =>
+                          setSessionForm((f) => ({
+                            ...f,
+                            startMinute: e.target.value,
+                          }))
+                        }
+                      >
+                        {minutes.map((m) => (
+                          <option key={m} value={m}>
+                            {m}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        aria-label="Start AM/PM"
+                        className="px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        value={sessionForm.startAmPm}
+                        onChange={(e) =>
+                          setSessionForm((f) => ({
+                            ...f,
+                            startAmPm: e.target.value,
+                          }))
+                        }
+                      >
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-700 block mb-1">
+                      End Time
+                    </label>
+                    <div className="flex gap-2">
+                      <select
+                        aria-label="End Hour"
+                        className="px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        value={sessionForm.endHour}
+                        onChange={(e) =>
+                          setSessionForm((f) => ({
+                            ...f,
+                            endHour: e.target.value,
+                          }))
+                        }
+                      >
+                        {hours.map((h) => (
+                          <option key={h} value={h}>
+                            {h}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="self-center">:</span>
+                      <select
+                        aria-label="End Minute"
+                        className="px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        value={sessionForm.endMinute}
+                        onChange={(e) =>
+                          setSessionForm((f) => ({
+                            ...f,
+                            endMinute: e.target.value,
+                          }))
+                        }
+                      >
+                        {minutes.map((m) => (
+                          <option key={m} value={m}>
+                            {m}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        aria-label="End AM/PM"
+                        className="px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        value={sessionForm.endAmPm}
+                        onChange={(e) =>
+                          setSessionForm((f) => ({
+                            ...f,
+                            endAmPm: e.target.value,
+                          }))
+                        }
+                      >
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
                 <div className="md:col-span-4 flex items-center justify-end">
                   <button
@@ -766,6 +894,7 @@ export function AdminCohorts() {
                                           status: toSave.status,
                                         }
                                       );
+                                      addToast('Attendance saved', 'success');
                                     } catch {
                                       addToast(
                                         'Failed to save attendance',

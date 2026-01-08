@@ -42,10 +42,10 @@ export function Contact() {
                 Our friendly team is here to help.
               </p>
               <a
-                href="mailto:hello@uriacademy.com"
+                href="mailto:uriacademyhq@gmail.com"
                 className="text-brand-600 font-bold hover:underline"
               >
-                hello@uriacademy.com
+                uriacademyhq@gmail.com
               </a>
             </div>
 
@@ -56,10 +56,10 @@ export function Contact() {
               <h3 className="font-bold text-xl mb-2">WhatsApp</h3>
               <p className="text-gray-600 mb-4">Chat with us directly.</p>
               <a
-                href="https://wa.me/234123456789"
+                href="https://wa.me/2347076307855"
                 className="text-brand-600 font-bold hover:underline"
               >
-                +234 123 456 789
+                +234 707 630 7855
               </a>
             </div>
 
@@ -72,9 +72,9 @@ export function Contact() {
                 Come say hello at our office.
               </p>
               <p className="text-brand-900 font-medium">
-                123 Innovation Drive,
+                4 Obaro close, Millennium Estate,
                 <br />
-                Lagos, Nigeria
+                Gbagada, Lagos State, Nigeria
               </p>
             </div>
           </div>

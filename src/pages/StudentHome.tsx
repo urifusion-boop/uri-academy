@@ -64,9 +64,34 @@ export function StudentHome() {
     return <div className="p-8 text-center">Loading dashboard...</div>;
   }
 
-  // Determine current module based on progress or simple logic
-  // For demo, just pick the module corresponding to week 2
-  const currentModule = curriculum.find((c) => c.week === 2) || curriculum[0];
+  // Determine current module based on progress
+  const getModuleStatus = (progress: number, totalModules: number) => {
+    if (totalModules === 0) return { index: 0, moduleProgress: 0 };
+
+    // progress is 0-100. Each module takes up (100 / totalModules)%
+    const progressPerModule = 100 / totalModules;
+
+    // Calculate which module we are in (e.g. 40% with 3 modules -> index 1)
+    let index = Math.floor(progress / progressPerModule);
+
+    // Cap index at last module
+    if (index >= totalModules) index = totalModules - 1;
+
+    // Calculate progress within this module
+    const progressInCurrent = progress - index * progressPerModule;
+    const moduleProgress = (progressInCurrent / progressPerModule) * 100;
+
+    return {
+      index,
+      moduleProgress: Math.min(Math.max(moduleProgress, 0), 100),
+    };
+  };
+
+  const { index: currentModuleIndex, moduleProgress } = getModuleStatus(
+    profile?.progress || 0,
+    curriculum.length
+  );
+  const currentModule = curriculum[currentModuleIndex] || curriculum[0];
 
   // Find next upcoming session
   const now = new Date();
@@ -155,7 +180,10 @@ export function StudentHome() {
             Week {currentModule?.week || 1} of {curriculum.length}
           </p>
           <div className="mt-4 w-full bg-gray-100 rounded-full h-1.5">
-            <div className="bg-brand-500 h-1.5 rounded-full w-[60%]"></div>
+            <div
+              className="bg-brand-500 h-1.5 rounded-full"
+              style={{ width: `${moduleProgress}%` }}
+            ></div>
           </div>
         </div>
 

@@ -54,7 +54,7 @@ export function Program() {
         <div className="container mx-auto px-4 relative z-10 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-800 border border-brand-700 text-brand-200 text-sm font-semibold mb-6">
             <Calendar className="w-4 h-4" />
-            4-Week Intensive Program
+            3-Week Intensive Program
           </div>
           <h1 className="text-4xl lg:text-6xl font-bold mb-6">
             Comprehensive <span className="text-brand-400">Curriculum</span>
