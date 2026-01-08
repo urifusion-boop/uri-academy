@@ -1,12 +1,3 @@
-import {
-  mockCohorts,
-  mockCurriculum,
-  mockUsers,
-  mockStudentProfiles,
-  mockAssignments,
-  mockSubmissions,
-  mockAdminTasks,
-} from './mockData';
 import type {
   StudentProfile,
   CurriculumItem,
@@ -14,12 +5,9 @@ import type {
   Assignment,
   Cohort,
   Submission,
-  Payment,
 } from '../types/schema';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
-const USE_MOCK = true; // Temporary fix enabled
-const DELAY = 500;
 
 // Helper types
 type ApiPayload = Record<string, unknown>;
@@ -36,8 +24,6 @@ export interface AdminTask {
   title: string;
   completed: boolean;
 }
-
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function fetchClient<T>(
   endpoint: string,
@@ -99,7 +85,7 @@ async function fetchClient<T>(
             waitTime
           )}ms... (${retries} retries left)`
         );
-        await delay(waitTime);
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
         return fetchWithRetry(retries - 1, delayMs * 2);
       }
       throw error;
@@ -164,13 +150,6 @@ export const api = {
   clearProfileCache: clearUserProfileCache,
   auth: {
     register: async (data: ApiPayload) => {
-      if (USE_MOCK) {
-        await delay(DELAY);
-        return {
-          token: 'mock-jwt-token',
-          user: mockUsers[0],
-        };
-      }
       return fetchClient('/api/auth/register', {
         method: 'POST',
         body: JSON.stringify(data),
@@ -178,18 +157,6 @@ export const api = {
       });
     },
     login: async (data: ApiPayload) => {
-      if (USE_MOCK) {
-        await delay(DELAY);
-        // Find user by email (mock login)
-        const email = (data.email as string) || '';
-        const user = mockUsers.find((u) => u.email === email) || mockUsers[0];
-
-        return {
-          token: 'mock-jwt-token',
-          refreshToken: 'mock-refresh-token',
-          user: user,
-        };
-      }
       return fetchClient('/api/auth/login', {
         method: 'POST',
         body: JSON.stringify(data),
@@ -197,48 +164,25 @@ export const api = {
       });
     },
     refresh: async () => {
-      if (USE_MOCK) {
-        await delay(DELAY);
-        return {
-          token: 'mock-refreshed-jwt-token',
-        };
-      }
       return fetchClient('/api/auth/refresh', { method: 'POST' });
     },
     logout: () => {
-      // If we have a refresh token, we should send it.
-      // However, we don't seem to store it in localStorage in Login.tsx
-      // We will try to send empty body or check if backend allows it.
-      // But based on error, it requires 'refreshToken'.
-      // If we don't have it, we can't send it.
-      // Best effort: just clear local state.
-
       const refreshToken = localStorage.getItem('refreshToken');
-      if (refreshToken && !USE_MOCK) {
+      if (refreshToken) {
         return fetchClient('/api/auth/logout', {
           method: 'POST',
           body: JSON.stringify({ refreshToken }),
         });
       }
-      // If no refresh token, we can't call the endpoint successfully if it requires it.
-      // We'll just return resolved promise so frontend can proceed to clear local state.
       return Promise.resolve();
     },
     requestPasswordReset: async (email: string) => {
-      if (USE_MOCK) {
-        await delay(DELAY);
-        return { success: true, message: 'Reset email sent' };
-      }
       return fetchClient('/api/auth/password/reset/request', {
         method: 'POST',
         body: JSON.stringify({ email }),
       });
     },
     confirmPasswordReset: async (data: ApiPayload) => {
-      if (USE_MOCK) {
-        await delay(DELAY);
-        return { success: true, message: 'Password reset successful' };
-      }
       return fetchClient('/api/auth/password/reset/confirm', {
         method: 'POST',
         body: JSON.stringify(data),
@@ -248,13 +192,6 @@ export const api = {
 
   users: {
     getMe: async (): Promise<User> => {
-      if (USE_MOCK) {
-        await delay(DELAY);
-        // Return the current mock user (assumed to be the first one or a specific one)
-        // In a real app, we'd decode the token or check local storage to know which user is logged in
-        // For this mock, we'll just return 'user-current' or the first user
-        return mockUsers.find((u) => u.id === 'user-current') || mockUsers[0];
-      }
       const response = await fetchClient<Record<string, unknown>>(
         '/api/users/me'
       );
@@ -274,30 +211,18 @@ export const api = {
       return user;
     },
     updateMe: async (data: Partial<User>) => {
-      if (USE_MOCK) {
-        await delay(DELAY);
-        return { ...mockUsers[0], ...data };
-      }
       return fetchClient('/api/users/me', {
         method: 'PATCH',
         body: JSON.stringify(data),
       });
     },
     updatePassword: async (data: ApiPayload) => {
-      if (USE_MOCK) {
-        await delay(DELAY);
-        return { success: true };
-      }
       return fetchClient('/api/users/me/password', {
         method: 'PATCH',
         body: JSON.stringify(data),
       });
     },
     updateNotifications: async (data: ApiPayload) => {
-      if (USE_MOCK) {
-        await delay(DELAY);
-        return { success: true };
-      }
       return fetchClient('/api/users/me/notifications', {
         method: 'PATCH',
         body: JSON.stringify(data),
@@ -307,10 +232,6 @@ export const api = {
 
   assignments: {
     list: async (): Promise<Assignment[]> => {
-      if (USE_MOCK) {
-        await delay(DELAY);
-        return mockAssignments;
-      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response = await fetchClient<any>('/api/assignments');
       // Normalize response: check for direct array or nested items
@@ -327,39 +248,12 @@ export const api = {
     getById: (id: string): Promise<Assignment> =>
       fetchClient(`/api/assignments/${id}`),
     createSubmission: async (id: string, data: ApiPayload) => {
-      if (USE_MOCK) {
-        await delay(DELAY);
-        // Create a mock submission response
-        const newSubmission: Submission = {
-          id: `sub-${Date.now()}`,
-          assignmentId: id,
-          studentId: 'profile-current', // Mock current user
-          status: 'PENDING', // Use string literal or enum value
-          submittedAt: new Date().toISOString(),
-          // Add contentURL or fileRef from data if present
-          ...data,
-        } as Submission;
-
-        // In a real mock store, we would push this to mockSubmissions
-        // mockSubmissions.push(newSubmission);
-        return newSubmission;
-      }
       return fetchClient(`/api/assignments/${id}/submissions`, {
         method: 'POST',
         body: JSON.stringify(data),
       });
     },
     getSubmissions: async (): Promise<Submission[]> => {
-      if (USE_MOCK) {
-        await delay(DELAY);
-        // Return submissions for the current mock student
-        return mockSubmissions
-          .filter((s) => s.studentId === 'profile-current')
-          .map((sub) => ({
-            ...sub,
-            assignment: mockAssignments.find((a) => a.id === sub.assignmentId),
-          }));
-      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response = await fetchClient<any>('/api/assignments/submissions');
       if (Array.isArray(response)) return response;
@@ -367,14 +261,6 @@ export const api = {
       return [];
     },
     getAllSubmissions: async (): Promise<Submission[]> => {
-      if (USE_MOCK) {
-        await delay(DELAY);
-        return mockSubmissions.map((sub) => ({
-          ...sub,
-          student: mockStudentProfiles.find((p) => p.id === sub.studentId),
-          assignment: mockAssignments.find((a) => a.id === sub.assignmentId),
-        }));
-      }
       try {
         // Try admin endpoint first
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -425,19 +311,6 @@ export const api = {
       page?: number;
       pageSize?: number;
     }) => {
-      if (USE_MOCK) {
-        await delay(DELAY);
-        // Return mock sessions
-        return [
-          {
-            id: 'session-1',
-            cohortId: 'cohort-1',
-            date: new Date().toISOString(),
-            topic: 'Sales Fundamentals',
-            durationMinutes: 60,
-          },
-        ];
-      }
       const qp: Record<string, string> = {};
       if (params?.cohortId) qp.cohortId = params.cohortId;
       if (typeof params?.page === 'number') qp.page = String(params.page);
@@ -490,10 +363,6 @@ export const api = {
       page?: number;
       pageSize?: number;
     }): Promise<Cohort[]> => {
-      if (USE_MOCK) {
-        await delay(DELAY);
-        return mockCohorts;
-      }
       const qp: Record<string, string> = {};
       if (typeof params?.page === 'number') qp.page = String(params.page);
       if (typeof params?.pageSize === 'number')
@@ -536,10 +405,6 @@ export const api = {
       cohortId: string,
       params?: { page?: number; pageSize?: number }
     ) => {
-      if (USE_MOCK) {
-        await delay(DELAY);
-        return [];
-      }
       const qp: Record<string, string> = {};
       if (typeof params?.page === 'number') qp.page = String(params.page);
       if (typeof params?.pageSize === 'number')
@@ -567,10 +432,6 @@ export const api = {
       page?: number;
       pageSize?: number;
     }): Promise<unknown> => {
-      if (USE_MOCK) {
-        await delay(DELAY);
-        return [];
-      }
       const qp: Record<string, string> = {};
       if (params?.status) qp.status = params.status;
       if (params?.startDate) qp.startDate = params.startDate;
@@ -658,10 +519,6 @@ export const api = {
       page?: number;
       pageSize?: number;
     }): Promise<unknown> => {
-      if (USE_MOCK) {
-        await delay(DELAY);
-        return mockStudentProfiles;
-      }
       const qp: Record<string, string> = {};
       if (params?.search) qp.search = params.search;
       if (params?.cohortId) qp.cohortId = params.cohortId;
@@ -696,175 +553,146 @@ export const api = {
     page?: number;
     pageSize?: number;
   }): Promise<StudentProfile[]> => {
-    if (!USE_MOCK) {
-      try {
-        const response = await api.students.list(params);
-        // Handle paginated response { items: [...] } or flat array
-        // We cast to any here because the API return type definition doesn't match the actual backend response yet
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const rawData = response as any;
+    try {
+      const response = await api.students.list(params);
+      // Handle paginated response { items: [...] } or flat array
+      // We cast to any here because the API return type definition doesn't match the actual backend response yet
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rawData = response as any;
 
-        const items =
-          rawData && Array.isArray(rawData)
-            ? rawData
-            : rawData && rawData.items && Array.isArray(rawData.items)
-            ? rawData.items
-            : [];
+      const items =
+        rawData && Array.isArray(rawData)
+          ? rawData
+          : rawData && rawData.items && Array.isArray(rawData.items)
+          ? rawData.items
+          : [];
 
-        // Transform backend User objects to frontend StudentProfile objects if needed
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return items.map((item: any) => {
-          // If item has a profile property, it's likely a User object from the backend
-          if (item && typeof item === 'object' && 'profile' in item) {
-            const userItem = item as User;
-            return {
-              ...(userItem.profile || {}),
-              user: userItem, // Attach the user object to the profile
-            } as StudentProfile;
-          }
-          // Otherwise assume it's already a StudentProfile or compatible
-          return item as StudentProfile;
-        });
-      } catch (error) {
-        console.error('Failed to get students list', error);
-        throw error;
-      }
+      // Transform backend User objects to frontend StudentProfile objects if needed
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return items.map((item: any) => {
+        // If item has a profile property, it's likely a User object from the backend
+        if (item && typeof item === 'object' && 'profile' in item) {
+          const userItem = item as User;
+          return {
+            ...(userItem.profile || {}),
+            user: userItem, // Attach the user object to the profile
+          } as StudentProfile;
+        }
+        // Otherwise assume it's already a StudentProfile or compatible
+        return item as StudentProfile;
+      });
+    } catch (error) {
+      console.error('Failed to get students list', error);
+      throw error;
     }
-    await delay(DELAY);
-    return mockStudentProfiles;
   },
 
   getCurrentUserProfile: async (): Promise<StudentProfile> => {
-    if (!USE_MOCK) {
-      // Return cached profile if valid (TTL 10 seconds)
-      const now = Date.now();
-      if (userProfileCache && now - userProfileCacheTimestamp < 10000) {
-        return userProfileCache;
-      }
+    // Return cached profile if valid (TTL 10 seconds)
+    const now = Date.now();
+    if (userProfileCache && now - userProfileCacheTimestamp < 10000) {
+      return userProfileCache;
+    }
 
-      // Check localStorage for persisted profile to show immediately if API fails
-      const storedProfile = localStorage.getItem('user_profile');
-      if (storedProfile && !userProfileCache) {
-        try {
-          const parsed = JSON.parse(storedProfile);
-          // Use stored profile as initial cache to prevent flash
-          userProfileCache = parsed;
-          userProfileCacheTimestamp = now;
-        } catch (e) {
-          console.warn('Invalid stored profile', e);
-        }
-      }
-
+    // Check localStorage for persisted profile to show immediately if API fails
+    const storedProfile = localStorage.getItem('user_profile');
+    if (storedProfile && !userProfileCache) {
       try {
-        const user = await api.users.getMe();
-        let profile: StudentProfile;
-
-        // If the backend returns the profile nested in the user object
-        if (user.profile) {
-          profile = { ...user.profile, user };
-        } else {
-          // Try to fetch the full student profile (which includes payments/cohort/etc)
-          try {
-            const students = await api.getStudents({
-              search: user.email,
-            });
-            const found = students.find((s) => s.userId === user.id);
-            if (found) {
-              profile = { ...found, user };
-            } else {
-              throw new Error('Profile not found in students list');
-            }
-          } catch (e) {
-            // Fallback: construct a basic profile from the user object
-            console.warn(
-              'Could not fetch full profile, constructing basic one',
-              e
-            );
-            profile = {
-              id: user.id,
-              userId: user.id,
-              user: user,
-              progress: 0,
-              studentIdCode: 'PENDING',
-              cohortId: null,
-            };
-          }
-        }
-
-        // Fetch cohort details if we have an ID but no cohort object
-        if (profile.cohortId && !profile.cohort) {
-          try {
-            const cohort = await api.cohorts.getById(profile.cohortId);
-            profile.cohort = cohort;
-          } catch (err) {
-            console.warn('Failed to populate cohort details', err);
-          }
-        }
-
-        // Update cache and persistence
-        userProfileCache = profile;
+        const parsed = JSON.parse(storedProfile);
+        // Use stored profile as initial cache to prevent flash
+        userProfileCache = parsed;
         userProfileCacheTimestamp = now;
-        localStorage.setItem('user_profile', JSON.stringify(profile));
-        return profile;
-      } catch (error) {
-        console.error('Failed to get current user for profile', error);
-
-        // Fallback to persisted profile if API fails
-        if (storedProfile) {
-          console.warn('Returning persisted profile due to API failure');
-          return JSON.parse(storedProfile);
-        }
-
-        throw error;
+      } catch (e) {
+        console.warn('Invalid stored profile', e);
       }
     }
-    await delay(DELAY);
-    const user = await api.getCurrentUser();
-    const profile = mockStudentProfiles.find((p) => p.userId === user.id);
-    if (!profile) throw new Error('Profile not found');
 
-    const submissions = mockSubmissions.filter(
-      (s) => s.studentId === profile.id
-    );
+    try {
+      const user = await api.users.getMe();
+      let profile: StudentProfile;
 
-    return {
-      ...profile,
-      submissions,
-    };
+      // If the backend returns the profile nested in the user object
+      if (user.profile) {
+        profile = { ...user.profile, user };
+      } else {
+        // Try to fetch the full student profile (which includes payments/cohort/etc)
+        try {
+          const students = await api.getStudents({
+            search: user.email,
+          });
+          const found = students.find((s) => s.userId === user.id);
+          if (found) {
+            profile = { ...found, user };
+          } else {
+            throw new Error('Profile not found in students list');
+          }
+        } catch (e) {
+          // Fallback: construct a basic profile from the user object
+          console.warn(
+            'Could not fetch full profile, constructing basic one',
+            e
+          );
+          profile = {
+            id: user.id,
+            userId: user.id,
+            user: user,
+            progress: 0,
+            studentIdCode: 'PENDING',
+            cohortId: null,
+          };
+        }
+      }
+
+      // Fetch cohort details if we have an ID but no cohort object
+      if (profile.cohortId && !profile.cohort) {
+        try {
+          const cohort = await api.cohorts.getById(profile.cohortId);
+          profile.cohort = cohort;
+        } catch (err) {
+          console.warn('Failed to populate cohort details', err);
+        }
+      }
+
+      // Update cache and persistence
+      userProfileCache = profile;
+      userProfileCacheTimestamp = now;
+      localStorage.setItem('user_profile', JSON.stringify(profile));
+      return profile;
+    } catch (error) {
+      console.error('Failed to get current user for profile', error);
+
+      // Fallback to persisted profile if API fails
+      if (storedProfile) {
+        console.warn('Returning persisted profile due to API failure');
+        return JSON.parse(storedProfile);
+      }
+
+      throw error;
+    }
   },
 
   getCurriculum: async (): Promise<CurriculumItem[]> => {
-    // Note: The user list didn't explicitly include GET /api/curriculum,
-    // but the frontend uses it. We should fallback to mock if endpoint fails or isn't there.
-    if (!USE_MOCK) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response = await fetchClient<any>('/api/curriculum');
+      if (Array.isArray(response)) return response;
+      if (response && Array.isArray(response.items)) return response.items;
+      return [];
+    } catch (error) {
+      console.warn(
+        'API /curriculum failed, checking alternatives or falling back',
+        error
+      );
+      // Try getting it from cohorts if curriculum endpoint doesn't exist
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const response = await fetchClient<any>('/api/curriculum');
-        if (Array.isArray(response)) return response;
-        if (response && Array.isArray(response.items)) return response.items;
-        return [];
-      } catch (error) {
-        console.warn(
-          'API /curriculum failed, checking alternatives or falling back',
-          error
-        );
-        // Try getting it from cohorts if curriculum endpoint doesn't exist
-        try {
-          await api.cohorts.list();
-          // Logic to extract curriculum from current cohort would go here if backend supported it
-          // For now, if /curriculum fails, we really have no data.
-          // But per user request to use API data, we must try to fetch it.
-        } catch {
-          // ignore
-        }
-
-        // If real API fails, we must throw or return empty if we want to avoid mock data strictly.
-        // However, usually we fallback to empty array if no data.
-        return [];
+        await api.cohorts.list();
+        // Logic to extract curriculum from current cohort would go here if backend supported it
+        // For now, if /curriculum fails, we really have no data.
+      } catch {
+        // ignore
       }
+      return [];
     }
-    await delay(DELAY);
-    return mockCurriculum.sort((a, b) => a.orderIndex - b.orderIndex);
   },
 
   getCurrentUser: async (): Promise<User> => {
@@ -872,89 +700,61 @@ export const api = {
   },
 
   getSubmissions: async (): Promise<Submission[]> => {
-    if (!USE_MOCK) {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const response = await fetchClient<any>('/api/assignments/submissions');
-        if (Array.isArray(response)) return response;
-        if (response && Array.isArray(response.items)) return response.items;
-        return [];
-      } catch (error) {
-        console.warn(
-          'API /assignments/submissions failed, returning empty list',
-          error
-        );
-        return [];
-      }
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response = await fetchClient<any>('/api/assignments/submissions');
+      if (Array.isArray(response)) return response;
+      if (response && Array.isArray(response.items)) return response.items;
+      return [];
+    } catch (error) {
+      console.warn(
+        'API /assignments/submissions failed, returning empty list',
+        error
+      );
+      return [];
     }
-    await delay(DELAY);
-    return mockSubmissions.map((sub) => ({
-      ...sub,
-      student: mockStudentProfiles.find((p) => p.id === sub.studentId),
-      assignment: mockAssignments.find((a) => a.id === sub.assignmentId),
-    }));
   },
 
   getCohorts: async (): Promise<Cohort[]> => {
-    if (!USE_MOCK) return api.cohorts.list();
-    await delay(DELAY);
-    return mockCohorts;
+    return api.cohorts.list();
   },
 
   getAdminStats: async (): Promise<AdminStats> => {
-    if (!USE_MOCK) {
-      try {
-        const [students, cohorts] = await Promise.all([
-          api.getStudents().catch(() => []),
-          api.cohorts.list().catch(() => []),
-        ]);
+    try {
+      const [students, cohorts] = await Promise.all([
+        api.getStudents().catch(() => []),
+        api.cohorts.list().catch(() => []),
+      ]);
 
-        const activeCohortsCount = Array.isArray(cohorts)
-          ? cohorts.filter((c) => c.status === 'ACTIVE').length
-          : 0;
+      const activeCohortsCount = Array.isArray(cohorts)
+        ? cohorts.filter((c) => c.status === 'ACTIVE').length
+        : 0;
 
-        return {
-          totalStudents: Array.isArray(students) ? students.length : 0,
-          activeCohorts: activeCohortsCount,
-          completionRate: 'N/A', // No endpoint for this yet
-          revenue: 'N/A', // No endpoint for this yet
-        };
-      } catch (error) {
-        console.warn('Failed to fetch admin stats from API', error);
-        // Fallback to zeros on error, not mock data, to avoid confusion
-        return {
-          totalStudents: 0,
-          activeCohorts: 0,
-          completionRate: '-',
-          revenue: '-',
-        };
-      }
+      return {
+        totalStudents: Array.isArray(students) ? students.length : 0,
+        activeCohorts: activeCohortsCount,
+        completionRate: 'N/A', // No endpoint for this yet
+        revenue: 'N/A', // No endpoint for this yet
+      };
+    } catch (error) {
+      console.warn('Failed to fetch admin stats from API', error);
+      // Fallback to zeros on error, not mock data, to avoid confusion
+      return {
+        totalStudents: 0,
+        activeCohorts: 0,
+        completionRate: '-',
+        revenue: '-',
+      };
     }
-
-    // Fallback to mock data immediately
-    return {
-      totalStudents: mockStudentProfiles.length,
-      activeCohorts: mockCohorts.filter((c) => c.status === 'ACTIVE').length,
-      completionRate: '87%',
-      revenue: '₦2.4M',
-    };
   },
 
   getPendingTasks: async (): Promise<AdminTask[]> => {
     // No endpoint for admin tasks in the provided list
-    // Fallback to mock data immediately if using mock, else empty
-    if (!USE_MOCK) return [];
-    return mockAdminTasks;
+    return [];
   },
+
   files: {
     upload: async (data: { fileName: string; contentType?: string }) => {
-      if (USE_MOCK) {
-        await delay(DELAY);
-        return {
-          fileRef: `mock-file-${Date.now()}`,
-          url: '', // Empty URL signals no need to PUT (mock mode)
-        };
-      }
       const body = JSON.stringify(data);
       try {
         return await fetchClient('/api/files/upload', { method: 'POST', body });
@@ -972,13 +772,6 @@ export const api = {
       authorizationUrl: string;
       reference: string;
     }> => {
-      if (USE_MOCK) {
-        await delay(DELAY);
-        return {
-          authorizationUrl: 'https://checkout.paystack.com/mock-checkout',
-          reference: `ref_${Date.now()}`,
-        };
-      }
       return fetchClient('/api/payments/initialize', {
         method: 'POST',
         body: JSON.stringify(data || {}),
@@ -994,39 +787,6 @@ export const api = {
         refreshToken: string;
       };
     }> => {
-      if (USE_MOCK) {
-        await delay(DELAY);
-
-        // Update mock profile
-        const profile = mockStudentProfiles.find(
-          (p) => p.userId === 'user-current'
-        );
-        if (profile) {
-          if (!profile.payments) profile.payments = [];
-          profile.payments.push({
-            id: `pay-${Date.now()}`,
-            studentId: profile.id,
-            amount: 30000,
-            currency: 'NGN',
-            status: 'PAID',
-            method: 'CARD',
-            provider: 'PAYSTACK',
-            reference,
-            createdAt: new Date().toISOString(),
-          } as Payment);
-        }
-
-        clearUserProfileCache();
-
-        return {
-          status: 'PAID',
-          reference,
-          tokens: {
-            accessToken: 'mock-new-access-token-student',
-            refreshToken: 'mock-new-refresh-token',
-          },
-        };
-      }
       const response = await fetchClient<{
         status: string;
         reference: string;
