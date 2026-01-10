@@ -7,8 +7,7 @@ import type {
   Submission,
 } from '../types/schema';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.uricreative.com:8448';
-
+const API_URL = import.meta.env.VITE_API_URL || 'http://4.221.74.63:8004';
 const USE_MOCK = false;
 const DELAY = 1000;
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -60,13 +59,18 @@ async function fetchClient<T>(
     delayMs = 1000
   ): Promise<Response> => {
     try {
+      // Increased timeout to 120s to account for slow backend
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000);
+
       const response = await fetch(finalUrl, {
         headers: {
           ...headers,
           ...options?.headers,
         },
         ...options,
-      });
+        signal: controller.signal,
+      }).finally(() => clearTimeout(timeoutId));
 
       // If rate limited (429), throw error to trigger retry
       if (response.status === 429) {
@@ -197,6 +201,20 @@ export const api = {
 
   users: {
     getMe: async (): Promise<User> => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        const stored = localStorage.getItem('user');
+        if (stored) return JSON.parse(stored);
+        return {
+          id: 'mock-user-id',
+          email: 'mock@example.com',
+          name: 'Mock Student',
+          role: 'STUDENT',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          initials: 'MS',
+        };
+      }
       const response = await fetchClient<Record<string, unknown>>(
         '/api/users/me'
       );
@@ -216,18 +234,30 @@ export const api = {
       return user;
     },
     updateMe: async (data: Partial<User>) => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return { success: true };
+      }
       return fetchClient('/api/users/me', {
         method: 'PATCH',
         body: JSON.stringify(data),
       });
     },
     updatePassword: async (data: ApiPayload) => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return { success: true };
+      }
       return fetchClient('/api/users/me/password', {
         method: 'PATCH',
         body: JSON.stringify(data),
       });
     },
     updateNotifications: async (data: ApiPayload) => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return { success: true };
+      }
       return fetchClient('/api/users/me/notifications', {
         method: 'PATCH',
         body: JSON.stringify(data),
@@ -664,87 +694,44 @@ export const api = {
   },
 
   getCurrentUserProfile: async (): Promise<StudentProfile> => {
-    // Return cached profile if valid (TTL 10 seconds)
-    const now = Date.now();
-    if (userProfileCache && now - userProfileCacheTimestamp < 10000) {
-      return userProfileCache;
-    }
-
-    // Check localStorage for persisted profile to show immediately if API fails
-    const storedProfile = localStorage.getItem('user_profile');
-    if (storedProfile && !userProfileCache) {
-      try {
-        const parsed = JSON.parse(storedProfile);
-        // Use stored profile as initial cache to prevent flash
-        userProfileCache = parsed;
-        userProfileCacheTimestamp = now;
-      } catch (e) {
-        console.warn('Invalid stored profile', e);
-      }
-    }
-
-    try {
-      const user = await api.users.getMe();
-      let profile: StudentProfile;
-
-      // If the backend returns the profile nested in the user object
-      if (user.profile) {
-        profile = { ...user.profile, user };
-      } else {
-        // Try to fetch the full student profile (which includes payments/cohort/etc)
-        try {
-          const students = await api.getStudents({
-            search: user.email,
-          });
-          const found = students.find((s) => s.userId === user.id);
-          if (found) {
-            profile = { ...found, user };
-          } else {
-            throw new Error('Profile not found in students list');
-          }
-        } catch (e) {
-          // Fallback: construct a basic profile from the user object
-          console.warn(
-            'Could not fetch full profile, constructing basic one',
-            e
-          );
-          profile = {
-            id: user.id,
-            userId: user.id,
-            user: user,
-            progress: 0,
-            studentIdCode: 'PENDING',
-            cohortId: null,
-          };
-        }
-      }
-
-      // Fetch cohort details if we have an ID but no cohort object
-      if (profile.cohortId && !profile.cohort) {
-        try {
-          const cohort = await api.cohorts.getById(profile.cohortId);
-          profile.cohort = cohort;
-        } catch (err) {
-          console.warn('Failed to populate cohort details', err);
-        }
-      }
-
-      // Update cache and persistence
-      userProfileCache = profile;
-      userProfileCacheTimestamp = now;
+    if (USE_MOCK) {
+      await delay(DELAY);
+      const stored = localStorage.getItem('user_profile');
+      if (stored) return JSON.parse(stored);
+      const profile: StudentProfile = {
+        id: 'mock-profile-id',
+        userId: 'mock-user-id',
+        studentIdCode: 'URI-2024-001',
+        progress: 10,
+        payments: [
+          {
+            id: 'mock-payment-1',
+            studentId: 'mock-profile-id',
+            amount: 20000,
+            currency: 'NGN',
+            status: 'PAID',
+            method: 'CARD',
+            provider: 'PAYSTACK',
+            reference: 'mock-ref-initial',
+            createdAt: new Date().toISOString(),
+          },
+        ],
+      };
       localStorage.setItem('user_profile', JSON.stringify(profile));
       return profile;
-    } catch (error) {
-      console.error('Failed to get current user for profile', error);
-
-      // Fallback to persisted profile if API fails
-      if (storedProfile) {
-        console.warn('Returning persisted profile due to API failure');
-        return JSON.parse(storedProfile);
-      }
-
-      throw error;
     }
+    if (userProfileCache && Date.now() - userProfileCacheTimestamp < 60000) {
+      return userProfileCache;
+    }
+    const response = await fetchClient<Record<string, unknown>>(
+      '/api/students/me/profile'
+    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const profile = (response.data || response) as StudentProfile;
+    userProfileCache = profile;
+    userProfileCacheTimestamp = Date.now();
+    localStorage.setItem('user_profile', JSON.stringify(profile));
+    return profile;
   },
 
   getCurriculum: async (): Promise<CurriculumItem[]> => {
@@ -855,17 +842,65 @@ export const api = {
   },
 
   payments: {
-    initialize: async (data?: {
-      amount?: number;
+    initialize: async (data: {
+      amount: number;
       plan?: 'full' | 'deposit' | 'balance';
     }): Promise<{
       authorizationUrl: string;
       reference: string;
     }> => {
-      return fetchClient('/api/payments/initialize', {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        const mockRef = `mock-ref-${Date.now()}`;
+        // Since initialize doesn't take callbackUrl, we assume a default or just return a self-ref
+        // But for mock we need to simulate success.
+        // Let's assume the user is redirected to a page that calls verify.
+        // We will just redirect to /payment/verify?reference=...
+        // But we need the absolute URL.
+        const callbackUrl = `${window.location.origin}/payment/verify?reference=${mockRef}&source=payment`;
+        return {
+          authorizationUrl: callbackUrl,
+          reference: mockRef,
+        };
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response = await fetchClient<any>('/api/payments/initialize', {
         method: 'POST',
         body: JSON.stringify(data || {}),
       });
+      return response.data || response;
+    },
+    initializePublic: async (data: {
+      email: string;
+      name: string;
+      phoneNumber: string;
+      password?: string;
+      amount?: number;
+      plan?: 'full' | 'deposit';
+      callbackUrl?: string;
+    }): Promise<{
+      authorizationUrl: string;
+      reference: string;
+    }> => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        const mockRef = `mock-ref-${Date.now()}`;
+        const sep = data.callbackUrl?.includes('?') ? '&' : '?';
+        return {
+          authorizationUrl: `${data.callbackUrl}${sep}reference=${mockRef}`,
+          reference: mockRef,
+        };
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response = await fetchClient<any>(
+        '/api/payments/initialize-public',
+        {
+          method: 'POST',
+          body: JSON.stringify(data),
+          skipAuth: true,
+        }
+      );
+      return response.data || response;
     },
     verify: async (
       reference: string
@@ -877,6 +912,17 @@ export const api = {
         refreshToken: string;
       };
     }> => {
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return {
+          status: 'PAID',
+          reference,
+          tokens: {
+            accessToken: 'mock-access-token-' + Date.now(),
+            refreshToken: 'mock-refresh-token-' + Date.now(),
+          },
+        };
+      }
       const response = await fetchClient<{
         status: string;
         reference: string;

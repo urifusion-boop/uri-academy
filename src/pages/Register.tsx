@@ -1,35 +1,21 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   User as UserIcon,
   Mail,
   Phone,
   ArrowRight,
-  Lock,
-  Eye,
-  EyeOff,
+  CreditCard,
+  CheckCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 import { api } from '../services/api';
-import type { User } from '../types/schema';
 import { useToast } from '../context/ToastContext';
 
-interface AuthResponse {
-  token?: string;
-  accessToken?: string;
-  data?: {
-    token?: string;
-    user?: User;
-  };
-  user?: User;
-  success?: boolean;
-  id?: string;
-}
-
 export function Register() {
-  const navigate = useNavigate();
   const { addToast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [step, setStep] = useState<'plan' | 'details'>('plan');
+  const [paymentPlan, setPaymentPlan] = useState<'full' | 'deposit'>('full');
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,64 +25,153 @@ export function Register() {
     const name = formData.get('name') as string;
     const email = formData.get('email') as string;
     const phone = formData.get('phone') as string;
-    const password = formData.get('password') as string;
+
+    const amount = paymentPlan === 'full' ? 30000 : 20000;
+    const callbackUrl = `${window.location.origin}/payment/verify?source=register`;
 
     try {
-      const response = (await api.auth.register({
+      // Initialize Public Payment
+      const response = await api.payments.initializePublic({
         name,
         email,
-        phone,
-        password,
-      })) as AuthResponse;
+        phoneNumber: phone,
+        amount,
+        plan: paymentPlan,
+        callbackUrl,
+      });
 
-      const token =
-        response.token || response.accessToken || response.data?.token;
+      const { authorizationUrl } = response;
 
-      if (token) {
-        localStorage.setItem('token', token);
-        const user = response.user || response.data?.user;
-        if (user) {
-          localStorage.setItem('user', JSON.stringify(user));
-        }
-        addToast('Account created successfully', 'success');
-        navigate('/student/payments');
-      } else {
-        // Some APIs might not return token on register, but just success
-        // In that case, we might want to redirect to login
-        if (response.success || response.id) {
-          addToast('Account created successfully. Please login.', 'success');
-          navigate('/login');
-        } else {
-          throw new Error('Registration failed. Please try again.');
-        }
+      if (!authorizationUrl) {
+        throw new Error(
+          'Payment initialization failed: No authorization URL returned'
+        );
       }
+
+      // Redirect to Paystack
+      window.location.href = authorizationUrl;
     } catch (err: unknown) {
-      console.error('Registration failed:', err);
-      let errorMessage = 'Failed to create account. Please try again.';
+      console.error('Payment initialization failed:', err);
+      let errorMessage = 'Failed to initialize payment. Please try again.';
       if (err instanceof Error) {
-        if (
+        if (err.name === 'AbortError') {
+          errorMessage =
+            'Connection timed out. The server took too long to respond.';
+        } else if (
           err.message.includes('409') ||
           err.message.toLowerCase().includes('exist')
         ) {
-          errorMessage = 'Email already in use';
+          errorMessage = 'Email already in use. Please login instead.';
         } else {
           errorMessage = err.message;
         }
       }
       addToast(errorMessage, 'error');
-    } finally {
       setLoading(false);
     }
   };
 
+  if (step === 'plan') {
+    return (
+      <div className="animate-fade-in">
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold text-gray-900">Select Your Plan</h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Choose a payment option to start your journey.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <div
+            onClick={() => setPaymentPlan('full')}
+            className={`cursor-pointer rounded-xl border-2 p-6 transition-all ${
+              paymentPlan === 'full'
+                ? 'border-brand-500 bg-brand-50 ring-1 ring-brand-500'
+                : 'border-gray-200 hover:border-brand-200 hover:bg-gray-50'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-bold text-lg text-gray-900">
+                Full Payment
+              </span>
+              {paymentPlan === 'full' && (
+                <CheckCircle className="w-6 h-6 text-brand-600" />
+              )}
+            </div>
+            <div className="text-3xl font-bold text-brand-900 mb-2">
+              ₦30,000
+            </div>
+            <p className="text-sm text-gray-600">
+              One-time payment for full access to all course materials and
+              mentorship.
+            </p>
+          </div>
+
+          <div
+            onClick={() => setPaymentPlan('deposit')}
+            className={`cursor-pointer rounded-xl border-2 p-6 transition-all ${
+              paymentPlan === 'deposit'
+                ? 'border-brand-500 bg-brand-50 ring-1 ring-brand-500'
+                : 'border-gray-200 hover:border-brand-200 hover:bg-gray-50'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-bold text-lg text-gray-900">Deposit</span>
+              {paymentPlan === 'deposit' && (
+                <CheckCircle className="w-6 h-6 text-brand-600" />
+              )}
+            </div>
+            <div className="text-3xl font-bold text-brand-900 mb-2">
+              ₦20,000
+            </div>
+            <p className="text-sm text-gray-600">
+              Secure your spot now and pay the balance later.
+            </p>
+          </div>
+
+          <button
+            onClick={() => setStep('details')}
+            className="w-full mt-6 flex justify-center items-center py-4 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-all hover:-translate-y-0.5"
+          >
+            Continue with {paymentPlan === 'full' ? 'Full Payment' : 'Deposit'}
+            <ArrowRight className="ml-2 w-4 h-4" />
+          </button>
+
+          <div className="text-center pt-4">
+            <p className="text-sm text-gray-600">
+              Already have an account?{' '}
+              <Link
+                to="/login"
+                className="font-bold text-brand-600 hover:text-brand-500 transition-colors"
+              >
+                Log in
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="animate-fade-in">
       <div className="mb-8">
+        <button
+          onClick={() => setStep('plan')}
+          className="text-sm text-gray-500 hover:text-gray-700 flex items-center mb-4 transition-colors"
+        >
+          <ArrowRight className="w-4 h-4 mr-1 rotate-180" />
+          Back to Plans
+        </button>
         <h2 className="text-3xl font-bold text-gray-900">
-          Create your account
+          Contact Information
         </h2>
         <p className="mt-2 text-sm text-gray-600">
-          Start your journey to becoming a Digital Sales Expert.
+          Enter your details to proceed to payment for the{' '}
+          <span className="font-bold text-brand-600">
+            {paymentPlan === 'full' ? 'Full Payment' : 'Deposit'}
+          </span>{' '}
+          plan.
         </p>
       </div>
 
@@ -167,59 +242,21 @@ export function Register() {
           </div>
         </div>
 
-        <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Password
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              id="password"
-              name="password"
-              type={showPassword ? 'text' : 'password'}
-              required
-              className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-brand-500 focus:border-brand-500 transition-colors"
-              placeholder="Create a password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-gray-600 focus:outline-none"
-            >
-              {showPassword ? (
-                <EyeOff className="h-5 w-5" />
-              ) : (
-                <Eye className="h-5 w-5" />
-              )}
-            </button>
-          </div>
-        </div>
-
         <button
           type="submit"
           disabled={loading}
           className="w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-all disabled:opacity-70 disabled:cursor-not-allowed hover:-translate-y-0.5"
         >
-          {loading ? 'Creating account...' : 'Create Account'}
-          {!loading && <ArrowRight className="ml-2 w-4 h-4" />}
+          {loading ? (
+            'Processing...'
+          ) : (
+            <>
+              Proceed to Payment (₦
+              {paymentPlan === 'full' ? '30,000' : '20,000'})
+            </>
+          )}
+          {!loading && <CreditCard className="ml-2 w-4 h-4" />}
         </button>
-
-        <div className="text-center">
-          <p className="text-sm text-gray-600">
-            Already have an account?{' '}
-            <Link
-              to="/login"
-              className="font-bold text-brand-600 hover:text-brand-500 transition-colors"
-            >
-              Log in
-            </Link>
-          </p>
-        </div>
       </form>
     </div>
   );
