@@ -154,6 +154,32 @@ export const clearUserProfileCache = () => {
   localStorage.removeItem('user_profile');
 };
 
+const hydrateProfile = async (
+  profile: StudentProfile
+): Promise<StudentProfile> => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const p = profile as any;
+
+  // 1. Map snake_case cohort_id if present and cohortId is missing
+  if (!p.cohortId && p.cohort_id) {
+    p.cohortId = p.cohort_id;
+  }
+
+  // 2. Hydrate cohort if missing but ID exists
+  if (p.cohortId && !p.cohort) {
+    try {
+      // Use fetchClient directly to avoid circular reference to 'api'
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const cohort = await fetchClient<any>(`/api/cohorts/${p.cohortId}`);
+      p.cohort = cohort;
+    } catch (e) {
+      console.warn('Failed to hydrate cohort details', e);
+    }
+  }
+
+  return p as StudentProfile;
+};
+
 // New API Structure based on User Requirements
 export const api = {
   clearProfileCache: clearUserProfileCache,
@@ -721,6 +747,12 @@ export const api = {
       return profile;
     }
     if (userProfileCache && Date.now() - userProfileCacheTimestamp < 60000) {
+      // Hydrate cached profile if needed (in case it was cached before hydration logic was added)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const p = userProfileCache as any;
+      if ((p.cohortId || p.cohort_id) && !p.cohort) {
+        userProfileCache = await hydrateProfile(userProfileCache);
+      }
       return userProfileCache;
     }
 
@@ -729,17 +761,10 @@ export const api = {
         '/api/students/me/profile'
       );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const profile = (response.data || response) as StudentProfile;
+      let profile = (response.data || response) as StudentProfile;
 
-      // Hydrate cohort if missing but ID exists
-      if (profile.cohortId && !profile.cohort) {
-        try {
-          const cohort = await api.cohorts.getById(profile.cohortId);
-          profile.cohort = cohort;
-        } catch (e) {
-          console.warn('Failed to hydrate cohort details', e);
-        }
-      }
+      // Hydrate profile (handles snake_case IDs and missing cohort details)
+      profile = await hydrateProfile(profile);
 
       userProfileCache = profile;
       userProfileCacheTimestamp = Date.now();
@@ -751,7 +776,8 @@ export const api = {
       // Fallback 1: Stored full profile
       const storedProfile = localStorage.getItem('user_profile');
       if (storedProfile) {
-        return JSON.parse(storedProfile);
+        const profile = JSON.parse(storedProfile);
+        return await hydrateProfile(profile);
       }
 
       // Fallback 2: Stored user object -> Partial profile
