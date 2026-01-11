@@ -29,6 +29,24 @@ export function Register() {
     const amount = paymentPlan === 'full' ? 30000 : 20000;
     const callbackUrl = `${window.location.origin}/payment/verify?source=register`;
 
+    // Save minimal user info to localStorage as a fallback
+    localStorage.setItem(
+      'user',
+      JSON.stringify({
+        name,
+        email,
+        phoneNumber: phone,
+        role: 'STUDENT',
+        initials: name
+          .split(' ')
+          .map((n) => n[0])
+          .slice(0, 2)
+          .join('')
+          .toUpperCase(),
+        id: 'pending-id',
+      })
+    );
+
     try {
       // Initialize Public Payment
       const response = await api.payments.initializePublic({

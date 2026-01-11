@@ -723,15 +723,42 @@ export const api = {
     if (userProfileCache && Date.now() - userProfileCacheTimestamp < 60000) {
       return userProfileCache;
     }
-    const response = await fetchClient<Record<string, unknown>>(
-      '/api/students/me/profile'
-    );
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const profile = (response.data || response) as StudentProfile;
-    userProfileCache = profile;
-    userProfileCacheTimestamp = Date.now();
-    localStorage.setItem('user_profile', JSON.stringify(profile));
-    return profile;
+
+    try {
+      const response = await fetchClient<Record<string, unknown>>(
+        '/api/students/me/profile'
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const profile = (response.data || response) as StudentProfile;
+      userProfileCache = profile;
+      userProfileCacheTimestamp = Date.now();
+      localStorage.setItem('user_profile', JSON.stringify(profile));
+      return profile;
+    } catch (error) {
+      console.warn('Failed to fetch profile, attempting fallback', error);
+
+      // Fallback 1: Stored full profile
+      const storedProfile = localStorage.getItem('user_profile');
+      if (storedProfile) {
+        return JSON.parse(storedProfile);
+      }
+
+      // Fallback 2: Stored user object -> Partial profile
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        // Construct a minimal profile wrapper
+        return {
+          id: 'fallback-id',
+          userId: user.id || 'fallback-user-id',
+          user: user,
+          studentIdCode: 'PENDING',
+          progress: 0,
+        } as StudentProfile;
+      }
+
+      throw error;
+    }
   },
 
   getCurriculum: async (): Promise<CurriculumItem[]> => {
