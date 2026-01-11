@@ -157,24 +157,42 @@ export const clearUserProfileCache = () => {
 const hydrateProfile = async (
   profile: StudentProfile
 ): Promise<StudentProfile> => {
+  console.log('Hydrating profile - input:', profile);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const p = profile as any;
 
   // 1. Map snake_case cohort_id if present and cohortId is missing
   if (!p.cohortId && p.cohort_id) {
     p.cohortId = p.cohort_id;
+    console.log('Mapped cohort_id to cohortId:', p.cohortId);
   }
 
-  // 2. Hydrate cohort if missing but ID exists
+  // 2. Handle case where cohort is just an ID string
+  if (typeof p.cohort === 'string') {
+    console.log('Cohort is a string ID, moving to cohortId:', p.cohort);
+    p.cohortId = p.cohort;
+    p.cohort = undefined; // Clear it so we fetch the full object
+  }
+
+  // 3. Hydrate cohort if missing but ID exists
   if (p.cohortId && !p.cohort) {
     try {
+      console.log('Fetching missing cohort details for ID:', p.cohortId);
       // Use fetchClient directly to avoid circular reference to 'api'
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const cohort = await fetchClient<any>(`/api/cohorts/${p.cohortId}`);
       p.cohort = cohort;
+      console.log('Hydrated cohort details:', cohort);
     } catch (e) {
       console.warn('Failed to hydrate cohort details', e);
     }
+  } else {
+    console.log(
+      'Cohort hydration skipped. cohortId:',
+      p.cohortId,
+      'cohort:',
+      p.cohort
+    );
   }
 
   return p as StudentProfile;
@@ -773,6 +791,15 @@ export const api = {
     } catch (error) {
       console.warn('Failed to fetch profile, attempting fallback', error);
 
+      // Handle 403 Forbidden specifically - often implies role mismatch or missing profile
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const isForbidden = (error as any)?.message?.includes('403');
+      if (isForbidden) {
+        console.warn(
+          'Profile access forbidden (403). User might not have a student profile yet.'
+        );
+      }
+
       // Fallback 1: Stored full profile
       const storedProfile = localStorage.getItem('user_profile');
       if (storedProfile) {
@@ -784,14 +811,30 @@ export const api = {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         const user = JSON.parse(storedUser);
+
+        // If we got a 403, it's likely an applicant or admin without a student profile
+        // We should construct a safe fallback profile so the UI doesn't break
+
+        // Check if the user object itself has profile data nested (common in some auth responses)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const u = user as any;
+        const nestedProfile = u.profile || u.studentProfile;
+
         // Construct a minimal profile wrapper
-        return {
-          id: 'fallback-id',
+        const fallbackProfile: StudentProfile = {
+          id: nestedProfile?.id || 'fallback-id',
           userId: user.id || 'fallback-user-id',
           user: user,
-          studentIdCode: 'PENDING',
-          progress: 0,
-        } as StudentProfile;
+          studentIdCode: nestedProfile?.studentIdCode || 'PENDING',
+          progress: nestedProfile?.progress || 0,
+          // Try to recover cohort ID from various places
+          cohortId:
+            nestedProfile?.cohortId || nestedProfile?.cohort_id || u.cohortId,
+          cohort: nestedProfile?.cohort,
+        };
+
+        // Try to hydrate it (fetch cohort details if we have an ID)
+        return await hydrateProfile(fallbackProfile);
       }
 
       throw error;
