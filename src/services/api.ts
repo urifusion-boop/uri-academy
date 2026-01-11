@@ -730,6 +730,17 @@ export const api = {
       );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const profile = (response.data || response) as StudentProfile;
+
+      // Hydrate cohort if missing but ID exists
+      if (profile.cohortId && !profile.cohort) {
+        try {
+          const cohort = await api.cohorts.getById(profile.cohortId);
+          profile.cohort = cohort;
+        } catch (e) {
+          console.warn('Failed to hydrate cohort details', e);
+        }
+      }
+
       userProfileCache = profile;
       userProfileCacheTimestamp = Date.now();
       localStorage.setItem('user_profile', JSON.stringify(profile));
