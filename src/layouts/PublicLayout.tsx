@@ -26,12 +26,12 @@ export function PublicLayout() {
             : 'bg-transparent'
         }`}
       >
-        <div className="container mx-auto px-4 lg:px-8 h-32 flex items-center justify-between">
+        <div className="container mx-auto px-4 lg:px-8 h-20 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
             <img
               src={logo}
               alt="Uri Academy"
-              className="h-28 w-auto object-contain group-hover:scale-105 transition-transform"
+              className="h-16 w-auto object-contain group-hover:scale-105 transition-transform"
             />
           </Link>
 
@@ -98,7 +98,7 @@ export function PublicLayout() {
 
         {/* Mobile Nav */}
         {isMenuOpen && (
-          <div className="md:hidden absolute top-32 left-0 w-full bg-white border-b shadow-lg animate-fade-in">
+          <div className="md:hidden absolute top-20 left-0 w-full bg-white border-b shadow-lg animate-fade-in">
             <nav className="flex flex-col p-4 gap-2">
               <Link
                 to="/"
