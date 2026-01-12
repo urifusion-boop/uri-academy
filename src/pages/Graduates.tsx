@@ -2,11 +2,6 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Linkedin } from 'lucide-react';
 
-import graduate1 from '../assets/graduate-1.png';
-import graduate2 from '../assets/graduate-2.png';
-import graduate3 from '../assets/graduate-3.png';
-import graduate4 from '../assets/graduate-4.png';
-
 type Grad = {
   name: string;
   role: string;
@@ -16,7 +11,6 @@ type Grad = {
   skills: string[];
   available: boolean;
   linkedin?: string;
-  image?: string;
 };
 
 const GRADUATES: Grad[] = [
@@ -35,7 +29,6 @@ const GRADUATES: Grad[] = [
     ],
     available: true,
     linkedin: 'https://linkedin.com',
-    image: graduate1,
   },
   {
     name: 'Kwame Mensah',
@@ -46,7 +39,6 @@ const GRADUATES: Grad[] = [
     skills: ['Negotiation', 'HubSpot', 'Outbound', 'Objection Handling'],
     available: false,
     linkedin: 'https://linkedin.com',
-    image: graduate2,
   },
   {
     name: 'Adaeze Nwankwo',
@@ -57,7 +49,6 @@ const GRADUATES: Grad[] = [
     skills: ['Cold Email', 'Sales Psychology', 'Time Zones', 'CRM Hygiene'],
     available: true,
     linkedin: 'https://linkedin.com',
-    image: graduate3,
   },
   {
     name: 'Yusuf Bello',
@@ -68,7 +59,6 @@ const GRADUATES: Grad[] = [
     skills: ['Outbound Strategy', 'Closing', 'HubSpot', 'Uri Platform'],
     available: false,
     linkedin: 'https://linkedin.com',
-    image: graduate4,
   },
 ];
 
@@ -132,31 +122,32 @@ export function Graduates() {
             {list.map((g, i) => {
               const extra = Math.max(0, g.skills.length - 3);
               const shownSkills = g.skills.slice(0, 3);
+              const initials = g.name
+                .split(' ')
+                .filter(Boolean)
+                .slice(0, 2)
+                .map((p) => p[0]?.toUpperCase())
+                .join('');
               return (
                 <div
                   key={g.name + i}
                   className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow animate-slide-up h-full flex flex-col"
                   style={{ animationDelay: `${i * 0.04}s` }}
                 >
-                  {g.image && (
-                    <div className="h-40 bg-gray-100 overflow-hidden">
-                      <img
-                        src={g.image}
-                        alt={g.name}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    </div>
-                  )}
                   <div className="p-6 flex flex-col">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-bold text-gray-900">
-                          {g.name}
-                        </h3>
-                        <p className="text-gray-600">
-                          {g.role} • {g.location}
-                        </p>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center font-bold text-sm shrink-0">
+                          {initials}
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="text-lg font-bold text-gray-900 truncate">
+                            {g.name}
+                          </h3>
+                          <p className="text-gray-600 truncate">
+                            {g.role} • {g.location}
+                          </p>
+                        </div>
                       </div>
                       <span
                         className={`px-2.5 py-1 rounded-full text-xs font-semibold ${

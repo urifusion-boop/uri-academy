@@ -6,35 +6,37 @@ import { Download, Flame, Award } from "lucide-react";
 const phases = [
   {
     icon: Download,
-    period: "Weeks 1-3",
-    title: "The Download",
+    period: "01. Week 1",
+    title: "Foundation & Strategy",
     items: [
-      "Deep dive into Cold Email Copywriting",
-      "Cultural Nuance (Western Markets)",
-      "CRM Management & Data Hygiene",
-      "Sales Psychology Fundamentals",
+      "Psychology of Value",
+      "ICP & Persona Mapping",
+      "Market Intelligence",
+      "Sales Writing Fundamentals",
     ],
   },
   {
     icon: Flame,
-    period: "Weeks 4-5",
-    title: "Live Fire",
+    period: "02. Week 2",
+    title: "Tools & Traction",
     items: [
-      "You are assigned a quota",
-      "You use Uri to hunt leads",
-      "You book real meetings",
-      "Earn your first commissions",
+      "The Core Objective",
+      "CRM Mastery",
+      "AI-Powered Cadences",
+      "Discovery & Qualification",
+      "Live-Fire Prospecting",
     ],
   },
   {
     icon: Award,
-    period: "Week 6+",
-    title: "Placement",
+    period: "03. Week 3",
+    title: "Mastery & Placement",
     items: [
-      "Interview preparation",
-      "Portfolio review & polish",
-      "Intro to hiring partners",
-      "Career coaching & support",
+      "The Core Objective",
+      "The Capstone Campaign",
+      "Sales Portfolio Polish",
+      "Placement Readiness",
+      "Hiring Partner Intro",
     ],
   },
 ];
@@ -56,7 +58,7 @@ export const RoadmapSection = () => {
             The <span className="text-gradient">Roadmap</span>
           </h2>
           <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Your journey from beginner to placement-ready in just 6 weeks.
+            Your journey from foundation to placement readiness in 3 weeks.
           </p>
         </motion.div>
         

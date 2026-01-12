@@ -188,48 +188,54 @@ export function Assignments() {
       <h1 className="text-2xl font-bold mb-6">Assignments</h1>
 
       <div className="grid gap-4">
-        {assignments.map((assignment) => {
-          const submission = getSubmission(assignment.id);
-          const isSubmitted = !!submission;
+        {assignments
+          .filter(
+            (a) => !a.title.toLowerCase().includes('capstone') // Hide Capstone from general list
+          )
+          .map((assignment) => {
+            const submission = getSubmission(assignment.id);
+            const isSubmitted = !!submission;
 
-          return (
-            <div
-              key={assignment.id}
-              className="bg-white p-6 rounded-lg border shadow-sm flex items-center justify-between"
-            >
-              <div>
-                <h3 className="font-bold text-lg text-gray-900 mb-1">
-                  {assignment.title}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  Due: {formatDate(assignment.dueAt)}
-                </p>
+            return (
+              <div
+                key={assignment.id}
+                className="bg-white p-6 rounded-lg border shadow-sm flex items-center justify-between"
+              >
+                <div>
+                  <h3 className="font-bold text-lg text-gray-900 mb-1">
+                    {assignment.title}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Due: {formatDate(assignment.dueAt)}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  {isSubmitted ? (
+                    <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-1 rounded-full text-sm font-medium">
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Submitted</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-amber-600 bg-amber-50 px-3 py-1 rounded-full text-sm font-medium">
+                      <Clock className="w-4 h-4" />
+                      <span>Pending</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    onClick={() =>
+                      isSubmitted ? null : openSubmit(assignment)
+                    }
+                  >
+                    {isSubmitted ? 'View Feedback' : 'Submit'}
+                  </button>
+                </div>
               </div>
-
-              <div className="flex items-center gap-4">
-                {isSubmitted ? (
-                  <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-1 rounded-full text-sm font-medium">
-                    <CheckCircle className="w-4 h-4" />
-                    <span>Submitted</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 text-amber-600 bg-amber-50 px-3 py-1 rounded-full text-sm font-medium">
-                    <Clock className="w-4 h-4" />
-                    <span>Pending</span>
-                  </div>
-                )}
-
-                <button
-                  type="button"
-                  className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
-                  onClick={() => (isSubmitted ? null : openSubmit(assignment))}
-                >
-                  {isSubmitted ? 'View Feedback' : 'Submit'}
-                </button>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
         {assignments.length === 0 && (
           <p className="text-gray-500 text-center py-8">
             No assignments found.

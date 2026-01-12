@@ -332,6 +332,12 @@ export const api = {
         body: JSON.stringify(data),
       });
     },
+    issueCertificate: async (id: string, data: ApiPayload) => {
+      return fetchClient(`/api/assignments/${id}/issue-certificate`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
     getSubmissions: async (): Promise<Submission[]> => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response = await fetchClient<any>('/api/assignments/submissions');
@@ -778,7 +784,6 @@ export const api = {
       const response = await fetchClient<Record<string, unknown>>(
         '/api/students/me/profile'
       );
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let profile = (response.data || response) as StudentProfile;
 
       // Hydrate profile (handles snake_case IDs and missing cohort details)

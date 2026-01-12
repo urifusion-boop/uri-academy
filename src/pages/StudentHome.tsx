@@ -104,6 +104,9 @@ export function StudentHome() {
   // Get upcoming assignments (not submitted, sorted by due date)
   const upcomingAssignments = (Array.isArray(assignments) ? assignments : [])
     .filter((a) => {
+      // Check if it's capstone (hidden from general list)
+      if (a.title.toLowerCase().includes('capstone')) return false;
+
       // Check both profile submissions and fetched submissions
       const hasSubmission =
         profile?.submissions?.some((s) => s.assignmentId === a.id) ||

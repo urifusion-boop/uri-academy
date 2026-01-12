@@ -15,6 +15,11 @@ export function AdminSubmissions() {
   const [gradeScore, setGradeScore] = useState<number | ''>('');
   const [gradeFeedback, setGradeFeedback] = useState<string>('');
   const [grading, setGrading] = useState(false);
+  const [issuingFor, setIssuingFor] = useState<Submission | null>(null);
+  const [certFileURL, setCertFileURL] = useState('');
+  const [certSerial, setCertSerial] = useState('');
+  const [certIssuedAt, setCertIssuedAt] = useState('');
+  const [issuing, setIssuing] = useState(false);
 
   useEffect(() => {
     const fetchSubmissions = async () => {
@@ -210,6 +215,17 @@ export function AdminSubmissions() {
               >
                 <XCircle className="w-5 h-5" />
               </button>
+              {typeof submission.score === 'number' && (
+                <button
+                  type="button"
+                  className="px-3 py-1.5 bg-brand-600 text-white rounded-lg text-xs font-semibold hover:bg-brand-700"
+                  title="Issue Certificate"
+                  aria-label="Issue certificate"
+                  onClick={() => setIssuingFor(submission)}
+                >
+                  Issue Certificate
+                </button>
+              )}
             </div>
           </div>
         ))}
@@ -292,6 +308,128 @@ export function AdminSubmissions() {
                   disabled={grading}
                 >
                   {grading ? 'Saving...' : 'Approve & Save'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {issuingFor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Issue Certificate
+              </h2>
+              <button
+                type="button"
+                className="text-gray-500 hover:text-gray-700"
+                onClick={() => setIssuingFor(null)}
+                aria-label="Close"
+                title="Close"
+              >
+                ✕
+              </button>
+            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!issuingFor) return;
+                if (!certFileURL) {
+                  addToast('Provide a certificate file URL', 'error');
+                  return;
+                }
+                try {
+                  setIssuing(true);
+                  await api.assignments.issueCertificate(
+                    issuingFor.assignmentId,
+                    {
+                      studentId: issuingFor.studentId,
+                      fileURL: certFileURL,
+                      ...(certSerial ? { serialNumber: certSerial } : {}),
+                      ...(certIssuedAt ? { issuedAt: certIssuedAt } : {}),
+                    }
+                  );
+                  setIssuingFor(null);
+                  setCertFileURL('');
+                  setCertSerial('');
+                  setCertIssuedAt('');
+                  addToast('Certificate issued successfully', 'success');
+                } catch (err) {
+                  console.error('Issue certificate failed:', err);
+                  addToast('Failed to issue certificate', 'error');
+                } finally {
+                  setIssuing(false);
+                }
+              }}
+              className="px-6 py-5 space-y-4"
+            >
+              <div className="space-y-1">
+                <label
+                  htmlFor="cert-url"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Certificate File URL
+                </label>
+                <input
+                  id="cert-url"
+                  type="url"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  value={certFileURL}
+                  onChange={(e) => setCertFileURL(e.target.value)}
+                  placeholder="https://cdn.example.com/certificates/serial-ABC123.pdf"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label
+                    htmlFor="cert-serial"
+                    className="text-sm text-gray-700"
+                  >
+                    Serial Number (optional)
+                  </label>
+                  <input
+                    id="cert-serial"
+                    type="text"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    value={certSerial}
+                    onChange={(e) => setCertSerial(e.target.value)}
+                    placeholder="ABC123"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label
+                    htmlFor="cert-issued"
+                    className="text-sm text-gray-700"
+                  >
+                    Issued At (optional)
+                  </label>
+                  <input
+                    id="cert-issued"
+                    type="datetime-local"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    value={certIssuedAt}
+                    onChange={(e) => setCertIssuedAt(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  onClick={() => setIssuingFor(null)}
+                  disabled={issuing}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-50"
+                  disabled={issuing}
+                >
+                  {issuing ? 'Issuing...' : 'Issue Certificate'}
                 </button>
               </div>
             </form>
