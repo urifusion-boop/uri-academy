@@ -61,6 +61,14 @@ export function DashboardLayout() {
 
   useEffect(() => {
     const reference = searchParams.get('reference');
+    const selarStatus = searchParams.get('status') || searchParams.get('success');
+
+    // Handle temporary Selar success without verification
+    if ((selarStatus && (selarStatus.toLowerCase() === 'success' || selarStatus === '1')) && !showSuccessModal) {
+      setSearchParams({});
+      setShowSuccessModal(true);
+      return;
+    }
 
     // If no reference, or already verifying, or success modal is open, do nothing
     if (!reference || verifying || showSuccessModal) return;

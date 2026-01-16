@@ -1,13 +1,13 @@
 import { AlertCircle, Shield, CheckCircle, Clock } from 'lucide-react';
 import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { api } from '../services/api';
 import type { StudentProfile } from '../types/schema';
 
 export function Payments() {
   const [loading, setLoading] = useState(false);
   const { profile } = useOutletContext<{ profile: StudentProfile | null }>();
   const [paymentPlan, setPaymentPlan] = useState<'full' | 'deposit'>('full');
+  const SELAR_LINK = 'https://selar.com/j736831367';
 
   const payments = profile?.payments || [];
   const paidAmount = payments
@@ -63,17 +63,11 @@ export function Payments() {
   const handlePayment = async () => {
     setLoading(true);
     try {
-      // 1. Call backend to get Paystack URL
-      const { authorizationUrl } = await api.payments.initialize({
-        amount: amountToPay,
-        plan: showBalanceForm ? 'balance' : paymentPlan, // 'balance' is a new plan type we might need to handle in backend or just logical here
-      });
-
-      // 2. Redirect user to Paystack to complete payment
-      window.location.href = authorizationUrl;
+      // Temporarily redirect to Selar checkout
+      window.location.href = SELAR_LINK;
     } catch (error) {
-      console.error('Payment initialization failed', error);
-      alert('Payment initialization failed. Please try again.');
+      console.error('Payment redirect failed', error);
+      alert('Payment redirect failed. Please try again.');
       setLoading(false);
     }
   };
@@ -312,7 +306,7 @@ export function Payments() {
             </h3>
             <p className="text-xs text-gray-500 flex items-center gap-2">
               <Shield className="w-4 h-4 text-green-500" />
-              Your payment information is encrypted and secure via Paystack.
+              Your payment is processed securely via Selar.
             </p>
           </div>
         </div>

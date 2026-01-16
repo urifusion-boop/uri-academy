@@ -8,7 +8,6 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { useState } from 'react';
-import { api } from '../services/api';
 import { useToast } from '../context/ToastContext';
 
 export function Register() {
@@ -16,6 +15,7 @@ export function Register() {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<'plan' | 'details'>('plan');
   const [paymentPlan, setPaymentPlan] = useState<'full' | 'deposit'>('full');
+  const SELAR_LINK = 'https://selar.com/j736831367';
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,8 +26,8 @@ export function Register() {
     const email = formData.get('email') as string;
     const phone = formData.get('phone') as string;
 
-    const amount = paymentPlan === 'full' ? 30000 : 20000;
-    const callbackUrl = `${window.location.origin}/payment/verify?source=register`;
+    // const amount = paymentPlan === 'full' ? 30000 : 20000;
+    // const callbackUrl = `${window.location.origin}/payment/verify?source=register`;
 
     // Save minimal user info to localStorage as a fallback
     localStorage.setItem(
@@ -48,43 +48,11 @@ export function Register() {
     );
 
     try {
-      // Initialize Public Payment
-      const response = await api.payments.initializePublic({
-        name,
-        email,
-        phoneNumber: phone,
-        amount,
-        plan: paymentPlan,
-        callbackUrl,
-      });
-
-      const { authorizationUrl } = response;
-
-      if (!authorizationUrl) {
-        throw new Error(
-          'Payment initialization failed: No authorization URL returned'
-        );
-      }
-
-      // Redirect to Paystack
-      window.location.href = authorizationUrl;
+      // Temporarily redirect to Selar checkout
+      window.location.href = SELAR_LINK;
     } catch (err: unknown) {
-      console.error('Payment initialization failed:', err);
-      let errorMessage = 'Failed to initialize payment. Please try again.';
-      if (err instanceof Error) {
-        if (err.name === 'AbortError') {
-          errorMessage =
-            'Connection timed out. The server took too long to respond.';
-        } else if (
-          err.message.includes('409') ||
-          err.message.toLowerCase().includes('exist')
-        ) {
-          errorMessage = 'Email already in use. Please login instead.';
-        } else {
-          errorMessage = err.message;
-        }
-      }
-      addToast(errorMessage, 'error');
+      console.error('Payment redirect failed:', err);
+      addToast('Failed to redirect to payment. Please try again.', 'error');
       setLoading(false);
     }
   };

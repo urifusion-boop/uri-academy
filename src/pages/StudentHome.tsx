@@ -143,8 +143,8 @@ export function StudentHome() {
           <p className="text-brand-100 max-w-xl mb-8">
             You're making great progress. You've completed{' '}
             {profile?.progress || 0}% of the{' '}
-            {profile?.cohort?.name || 'Digital Sales Assistant'} program. Keep
-            it up!
+            {profile?.cohort?.name || 'Sales and Growth Executive'} program.
+            Keep it up!
           </p>
 
           <div className="flex flex-wrap gap-4">

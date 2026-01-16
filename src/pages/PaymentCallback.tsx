@@ -27,7 +27,22 @@ export function PaymentCallback() {
     const verifyPayment = async () => {
       const reference =
         searchParams.get('reference') || searchParams.get('trxref');
-      const source = searchParams.get('source');
+      // const source = searchParams.get('source');
+      const selarStatus =
+        searchParams.get('status') || searchParams.get('success');
+
+      // Temporary Selar success handling
+      if (
+        selarStatus &&
+        (selarStatus.toLowerCase() === 'success' || selarStatus === '1')
+      ) {
+        setStatus('success');
+        addToast('Payment successful! Welcome to Uri Academy.', 'success');
+        setTimeout(() => {
+          navigate('/student');
+        }, 1200);
+        return;
+      }
 
       if (!reference) {
         setStatus('error');
@@ -37,40 +52,8 @@ export function PaymentCallback() {
       // If we are already in setting_password or success state, don't re-verify
       if (status === 'setting_password' || status === 'success') return;
 
-      try {
-        const response = await api.payments.verify(reference);
-
-        if (response.status === 'PAID' && response.tokens) {
-          // Store auth tokens
-          localStorage.setItem('token', response.tokens.accessToken);
-          localStorage.setItem('refreshToken', response.tokens.refreshToken);
-
-          // Fetch user profile to ensure we have the latest data
-          try {
-            const user = await api.users.getMe();
-            localStorage.setItem('user', JSON.stringify(user));
-            await api.getCurrentUserProfile(); // Cache profile
-          } catch (e) {
-            console.error('Failed to fetch profile', e);
-          }
-
-          if (source === 'register') {
-            setStatus('setting_password');
-          } else {
-            setStatus('success');
-            addToast('Payment successful! Welcome to Uri Academy.', 'success');
-            setTimeout(() => {
-              navigate('/student');
-            }, 2000);
-          }
-        } else {
-          setStatus('error');
-          addToast('Payment verification failed.', 'error');
-        }
-      } catch (error) {
-        console.error('Verification error:', error);
-        setStatus('error');
-      }
+      // Paystack verification is temporarily disabled
+      setStatus('error');
     };
 
     verifyPayment();

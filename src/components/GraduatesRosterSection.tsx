@@ -1,12 +1,12 @@
-import { motion } from 'framer-motion';
-import { useInView } from 'framer-motion';
-import { useRef } from 'react';
-import { ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { motion } from "framer-motion";
+import { useInView } from "framer-motion";
+import { useRef } from "react";
+import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export const GraduatesRosterSection = () => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-100px' });
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
     <section ref={ref} className="py-20 md:py-24 bg-background overflow-hidden">
@@ -21,8 +21,7 @@ export const GraduatesRosterSection = () => {
             Uri Graduates
           </h2>
           <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Browse job-ready graduates trained in modern sales and AI-powered
-            outreach.
+            Browse job-ready graduates trained in modern sales and AI-powered outreach.
           </p>
           <Link
             to="/graduates"
