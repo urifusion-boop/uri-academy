@@ -1,5 +1,11 @@
-import { useEffect, useState } from 'react';
-import { CheckCircle, XCircle, FileText, Link as LinkIcon } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import {
+  CheckCircle,
+  XCircle,
+  FileText,
+  Link as LinkIcon,
+  UploadCloud,
+} from 'lucide-react';
 import { api } from '../services/api';
 import type { Submission } from '../types/schema';
 import { formatDate } from '../utils/date';
@@ -10,7 +16,7 @@ export function AdminSubmissions() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [gradingSubmission, setGradingSubmission] = useState<Submission | null>(
-    null
+    null,
   );
   const [gradeScore, setGradeScore] = useState<number | ''>('');
   const [gradeFeedback, setGradeFeedback] = useState<string>('');
@@ -20,6 +26,60 @@ export function AdminSubmissions() {
   const [certSerial, setCertSerial] = useState('');
   const [certIssuedAt, setCertIssuedAt] = useState('');
   const [issuing, setIssuing] = useState(false);
+  const [certUploadStatus, setCertUploadStatus] = useState('');
+  const certFileInputRef = useRef<HTMLInputElement>(null);
+
+  const uploadCertFile = async (file: File) => {
+    try {
+      setCertUploadStatus('Requesting upload URL...');
+      // 1. Get upload URL
+      const resp = (await api.files.upload({
+        fileName: file.name,
+        contentType: file.type || 'application/pdf',
+      })) as { fileRef: string; url: string };
+
+      if (!resp || !resp.fileRef) {
+        setCertUploadStatus('');
+        addToast('Failed to get upload URL', 'error');
+        return;
+      }
+
+      // 2. Upload file
+      setCertUploadStatus('Uploading file...');
+      if (resp.url) {
+        const putRes = await fetch(resp.url, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': file.type || 'application/pdf',
+          },
+          body: file,
+        });
+
+        if (!putRes.ok) {
+          setCertUploadStatus('');
+          addToast('Upload failed', 'error');
+          return;
+        }
+      }
+
+      // 3. Get download URL
+      setCertUploadStatus('Getting public URL...');
+      const downloadUrl = await api.files.getDownloadUrl(resp.fileRef);
+      setCertFileURL(downloadUrl);
+      setCertUploadStatus('File uploaded!');
+    } catch (e) {
+      console.error('Cert upload error', e);
+      setCertUploadStatus('');
+      addToast('Error uploading certificate', 'error');
+    }
+  };
+
+  const handleCertFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadCertFile(file);
+    }
+  };
 
   useEffect(() => {
     const fetchSubmissions = async () => {
@@ -52,7 +112,7 @@ export function AdminSubmissions() {
       }
 
       newWindow.document.write(
-        '<html><body style="font-family: sans-serif; padding: 20px;"><p>Loading file...</p></body></html>'
+        '<html><body style="font-family: sans-serif; padding: 20px;"><p>Loading file...</p></body></html>',
       );
       newWindow.document.close();
 
@@ -99,8 +159,8 @@ export function AdminSubmissions() {
         prev.map((s) =>
           s.id === gradingSubmission.id
             ? { ...s, score: gradeScore, feedback: gradeFeedback }
-            : s
-        )
+            : s,
+        ),
       );
       setGradingSubmission(null);
       addToast('Submission graded successfully', 'success');
@@ -121,8 +181,8 @@ export function AdminSubmissions() {
       });
       setSubmissions((prev) =>
         prev.map((s) =>
-          s.id === submission.id ? { ...s, notes: `Rejected: ${notes}` } : s
-        )
+          s.id === submission.id ? { ...s, notes: `Rejected: ${notes}` } : s,
+        ),
       );
       addToast('Submission rejected successfully', 'success');
     } catch (err) {
@@ -349,7 +409,7 @@ export function AdminSubmissions() {
                       fileURL: certFileURL,
                       ...(certSerial ? { serialNumber: certSerial } : {}),
                       ...(certIssuedAt ? { issuedAt: certIssuedAt } : {}),
-                    }
+                    },
                   );
                   setIssuingFor(null);
                   setCertFileURL('');
@@ -372,15 +432,39 @@ export function AdminSubmissions() {
                 >
                   Certificate File URL
                 </label>
-                <input
-                  id="cert-url"
-                  type="url"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                  value={certFileURL}
-                  onChange={(e) => setCertFileURL(e.target.value)}
-                  placeholder="https://cdn.example.com/certificates/serial-ABC123.pdf"
-                  required
-                />
+                <div className="flex gap-2">
+                  <input
+                    id="cert-url"
+                    type="url"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    value={certFileURL}
+                    onChange={(e) => setCertFileURL(e.target.value)}
+                    placeholder="https://..."
+                    required
+                  />
+                  <input
+                    type="file"
+                    ref={certFileInputRef}
+                    className="hidden"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    onChange={handleCertFileSelect}
+                    aria-label="Upload certificate file"
+                    title="Upload certificate file"
+                  />
+                  <button
+                    type="button"
+                    className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-600"
+                    onClick={() => certFileInputRef.current?.click()}
+                    title="Upload Certificate File"
+                  >
+                    <UploadCloud className="w-5 h-5" />
+                  </button>
+                </div>
+                {certUploadStatus && (
+                  <p className="text-xs text-brand-600 mt-1">
+                    {certUploadStatus}
+                  </p>
+                )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">

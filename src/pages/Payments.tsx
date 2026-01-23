@@ -2,12 +2,15 @@ import { AlertCircle, Shield, CheckCircle, Clock } from 'lucide-react';
 import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import type { StudentProfile } from '../types/schema';
+import { api } from '../services/api';
+import { useToast } from '../context/ToastContext';
 
 export function Payments() {
   const [loading, setLoading] = useState(false);
+  const { addToast } = useToast();
   const { profile } = useOutletContext<{ profile: StudentProfile | null }>();
   const [paymentPlan, setPaymentPlan] = useState<'full' | 'deposit'>('full');
-  const SELAR_LINK = 'https://selar.com/j736831367';
+  const [discountCode, setDiscountCode] = useState('');
 
   const payments = profile?.payments || [];
   const paidAmount = payments
@@ -17,22 +20,22 @@ export function Payments() {
   const isStudent = profile?.user?.role === 'STUDENT';
 
   // If user is a STUDENT (or has paid something) but not fully paid, they might be on installment
-  // Installment plan total is 35k. Full plan is 30k.
+  // Installment plan total is 35k. Full plan is 35k.
   // If they paid 20k (deposit), they owe 15k.
-  // If they paid 30k, they are done (Full plan).
+  // If they paid 35k, they are done (Full plan).
   // If they paid 35k, they are done (Installment plan).
 
   // Logic:
-  // If paidAmount >= 30000 -> Fully Paid (Assume 30k is sufficient for full access, or check specific plan if stored)
-  // If paidAmount >= 20000 && paidAmount < 30000 -> Deposit Paid. Balance 15k.
+  // If paidAmount >= 35000 -> Fully Paid (Assume 35k is sufficient for full access, or check specific plan if stored)
+  // If paidAmount >= 20000 && paidAmount < 35000 -> Deposit Paid. Balance 15k.
 
-  const isDepositPaid = paidAmount >= 20000 && paidAmount < 30000;
+  const isDepositPaid = paidAmount >= 20000 && paidAmount < 35000;
   // If user is a STUDENT and hasn't paid a deposit (or paid fully), assume they are fully paid (e.g. scholarship/manual)
-  const isFullyPaid = paidAmount >= 30000 || (isStudent && !isDepositPaid);
+  const isFullyPaid = paidAmount >= 35000 || (isStudent && !isDepositPaid);
   const balanceAmount = 15000; // Fixed balance for installment
 
   // Determine what to show
-  // If NOT Student (Applicant) -> Show Plans (Full 30k / Deposit 20k)
+  // If NOT Student (Applicant) -> Show Plans (Full 35k / Deposit 20k)
   // If Student AND Fully Paid -> Show "Paid" State
   // If Student AND Deposit Paid -> Show "Balance" State (Pay 15k)
 
@@ -46,8 +49,8 @@ export function Payments() {
   const amountToPay = showBalanceForm
     ? balanceAmount
     : paymentPlan === 'full'
-    ? 30000
-    : 20000;
+      ? 35000
+      : 20000;
 
   // Plan string for API
   // If paying balance, we might need a specific plan flag or just pass amount.
@@ -63,11 +66,41 @@ export function Payments() {
   const handlePayment = async () => {
     setLoading(true);
     try {
-      // Temporarily redirect to Selar checkout
-      window.location.href = SELAR_LINK;
-    } catch (error) {
+      const plan = showBalanceForm ? 'balance' : paymentPlan;
+      const callbackUrl = `${window.location.origin}/payment/verify?source=payment`;
+
+      const response = await api.payments.initialize({
+        amount: amountToPay,
+        plan: plan as 'full' | 'deposit' | 'balance',
+        callbackUrl,
+        discountCode: discountCode.trim() || undefined,
+      });
+
+      const { authorizationUrl } = response;
+
+      if (!authorizationUrl) {
+        throw new Error('Payment initialization failed: No URL returned');
+      }
+
+      window.location.href = authorizationUrl;
+    } catch (error: unknown) {
       console.error('Payment redirect failed', error);
-      alert('Payment redirect failed. Please try again.');
+      let errorMessage = 'Payment initialization failed. Please try again.';
+
+      if (error instanceof Error) {
+        if (
+          error.message.includes('400') &&
+          (error.message.toLowerCase().includes('discount') ||
+            error.message.toLowerCase().includes('code'))
+        ) {
+          errorMessage = 'Invalid or expired discount code.';
+        } else if (error.message) {
+          // Clean up generic API error prefix if present
+          errorMessage = error.message.replace(/^API Error: \d+ .*? - /, '');
+        }
+      }
+
+      addToast(errorMessage, 'error');
       setLoading(false);
     }
   };
@@ -152,7 +185,7 @@ export function Payments() {
                     <span className="font-bold text-gray-900">
                       Full Payment
                     </span>
-                    <span className="font-bold text-brand-600">₦30,000</span>
+                    <span className="font-bold text-brand-600">₦35,000</span>
                   </div>
                   <p className="text-xs text-gray-500">
                     Best value. One-time payment for full access.
@@ -178,6 +211,23 @@ export function Payments() {
                     ₦35,000.
                   </p>
                 </div>
+              </div>
+
+              <div className="mb-6">
+                <label
+                  htmlFor="discountCode1"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Discount Code (Optional)
+                </label>
+                <input
+                  id="discountCode1"
+                  type="text"
+                  value={discountCode}
+                  onChange={(e) => setDiscountCode(e.target.value)}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-brand-500 focus:border-brand-500 transition-colors uppercase"
+                  placeholder="Enter discount code"
+                />
               </div>
 
               <button
@@ -209,6 +259,23 @@ export function Payments() {
                 <p className="text-xs text-gray-500">
                   Due for the Installment Plan (Total ₦35,000)
                 </p>
+              </div>
+
+              <div className="mb-6">
+                <label
+                  htmlFor="discountCode2"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Discount Code (Optional)
+                </label>
+                <input
+                  id="discountCode2"
+                  type="text"
+                  value={discountCode}
+                  onChange={(e) => setDiscountCode(e.target.value)}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-brand-500 focus:border-brand-500 transition-colors uppercase"
+                  placeholder="Enter discount code"
+                />
               </div>
 
               <button
@@ -282,8 +349,8 @@ export function Payments() {
                             {payment.amount >= 30000
                               ? 'Full Payment'
                               : payment.amount >= 20000
-                              ? 'Deposit'
-                              : 'Balance Payment'}
+                                ? 'Deposit'
+                                : 'Balance Payment'}
                           </p>
                           <p className="text-xs text-gray-500">
                             {new Date(payment.createdAt).toLocaleDateString()}
@@ -306,7 +373,7 @@ export function Payments() {
             </h3>
             <p className="text-xs text-gray-500 flex items-center gap-2">
               <Shield className="w-4 h-4 text-green-500" />
-              Your payment is processed securely via Selar.
+              Your payment is processed securely via Squad.
             </p>
           </div>
         </div>

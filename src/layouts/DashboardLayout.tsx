@@ -61,14 +61,6 @@ export function DashboardLayout() {
 
   useEffect(() => {
     const reference = searchParams.get('reference');
-    const selarStatus = searchParams.get('status') || searchParams.get('success');
-
-    // Handle temporary Selar success without verification
-    if ((selarStatus && (selarStatus.toLowerCase() === 'success' || selarStatus === '1')) && !showSuccessModal) {
-      setSearchParams({});
-      setShowSuccessModal(true);
-      return;
-    }
 
     // If no reference, or already verifying, or success modal is open, do nothing
     if (!reference || verifying || showSuccessModal) return;
@@ -96,7 +88,7 @@ export function DashboardLayout() {
           }
         } else {
           alert(
-            'Payment verification failed or pending. Please contact support if you have been debited.'
+            'Payment verification failed or pending. Please contact support if you have been debited.',
           );
         }
       } catch (error) {
@@ -151,7 +143,7 @@ export function DashboardLayout() {
           'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative',
           isActive
             ? 'bg-brand-50 text-brand-700 shadow-sm'
-            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900',
         )}
         onClick={() => setIsSidebarOpen(false)}
       >
@@ -163,7 +155,7 @@ export function DashboardLayout() {
             'w-5 h-5 transition-colors',
             isActive
               ? 'text-brand-600'
-              : 'text-gray-400 group-hover:text-gray-600'
+              : 'text-gray-400 group-hover:text-gray-600',
           )}
         />
         {item.label}
@@ -235,7 +227,9 @@ export function DashboardLayout() {
       <aside
         className={cn(
           'fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-100 shadow-xl transform transition-transform duration-300 ease-in-out flex flex-col h-full shrink-0',
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+          isSidebarOpen
+            ? 'translate-x-0'
+            : '-translate-x-full md:translate-x-0',
         )}
       >
         <div className="h-28 flex items-center px-8 border-b border-gray-50">
@@ -282,8 +276,8 @@ export function DashboardLayout() {
                   {profile?.user?.role === 'ADMIN'
                     ? 'Admin Account'
                     : profile?.user?.role === 'STUDENT'
-                    ? 'Student Account'
-                    : 'Applicant Account'}
+                      ? 'Student Account'
+                      : 'Applicant Account'}
                 </p>
               </div>
             </div>
@@ -357,8 +351,8 @@ export function DashboardLayout() {
                   {profile
                     ? profile.cohort?.name || 'No Cohort Assigned'
                     : error
-                    ? 'No Cohort'
-                    : 'Loading...'}
+                      ? 'No Cohort'
+                      : 'Loading...'}
                 </p>
               </div>
             </div>

@@ -31,7 +31,7 @@ export interface AdminTask {
 
 async function fetchClient<T>(
   endpoint: string,
-  options?: RequestInit & { skipAuth?: boolean }
+  options?: RequestInit & { skipAuth?: boolean },
 ): Promise<T> {
   const token = localStorage.getItem('token');
   const headers: HeadersInit = {
@@ -56,7 +56,7 @@ async function fetchClient<T>(
   // Simple exponential backoff retry mechanism with jitter
   const fetchWithRetry = async (
     retries = 3,
-    delayMs = 1000
+    delayMs = 1000,
   ): Promise<Response> => {
     try {
       // Increased timeout to 120s to account for slow backend
@@ -91,8 +91,8 @@ async function fetchClient<T>(
 
         console.warn(
           `Retrying request to ${endpoint} in ${Math.round(
-            waitTime
-          )}ms... (${retries} retries left)`
+            waitTime,
+          )}ms... (${retries} retries left)`,
         );
         await new Promise((resolve) => setTimeout(resolve, waitTime));
         return fetchWithRetry(retries - 1, delayMs * 2);
@@ -113,7 +113,7 @@ async function fetchClient<T>(
       .then(async (response) => {
         if (!response.ok) {
           throw new Error(
-            `API Error: ${response.status} ${response.statusText}`
+            `API Error: ${response.status} ${response.statusText}`,
           );
         }
         return response.json();
@@ -136,7 +136,7 @@ async function fetchClient<T>(
     }
     const errorBody = await response.text();
     throw new Error(
-      `API Error: ${response.status} ${response.statusText} - ${errorBody}`
+      `API Error: ${response.status} ${response.statusText} - ${errorBody}`,
     );
   }
 
@@ -155,7 +155,7 @@ export const clearUserProfileCache = () => {
 };
 
 const hydrateProfile = async (
-  profile: StudentProfile
+  profile: StudentProfile,
 ): Promise<StudentProfile> => {
   console.log('Hydrating profile - input:', profile);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -191,7 +191,7 @@ const hydrateProfile = async (
       'Cohort hydration skipped. cohortId:',
       p.cohortId,
       'cohort:',
-      p.cohort
+      p.cohort,
     );
   }
 
@@ -259,9 +259,8 @@ export const api = {
           initials: 'MS',
         };
       }
-      const response = await fetchClient<Record<string, unknown>>(
-        '/api/users/me'
-      );
+      const response =
+        await fetchClient<Record<string, unknown>>('/api/users/me');
       // Handle wrapped response (e.g. { success: true, data: user })
       const user = (response.data || response.user || response) as User;
 
@@ -358,7 +357,7 @@ export const api = {
         try {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const response = await fetchClient<any>(
-            '/api/assignments/submissions?all=true'
+            '/api/assignments/submissions?all=true',
           );
           if (Array.isArray(response)) return response;
           if (response && Array.isArray(response.items)) return response.items;
@@ -523,7 +522,7 @@ export const api = {
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response = await fetchClient<any>(
-        `/api/curriculum/${curriculumItemId}/content`
+        `/api/curriculum/${curriculumItemId}/content`,
       );
       if (Array.isArray(response)) return response;
       if (response && Array.isArray(response.items)) return response.items;
@@ -559,7 +558,7 @@ export const api = {
     },
     listByCohort: async (
       cohortId: string,
-      params?: { page?: number; pageSize?: number }
+      params?: { page?: number; pageSize?: number },
     ) => {
       const qp: Record<string, string> = {};
       if (typeof params?.page === 'number') qp.page = String(params.page);
@@ -570,7 +569,7 @@ export const api = {
         : '';
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response = await fetchClient<any>(
-        `/api/cohorts/${cohortId}/content${qs}`
+        `/api/cohorts/${cohortId}/content${qs}`,
       );
       if (Array.isArray(response)) return response;
       if (response && Array.isArray(response.items)) return response.items;
@@ -606,7 +605,7 @@ export const api = {
       if (params?.studentId) {
         try {
           response = await fetchClient(
-            `/api/students/${params.studentId}/certificates${qs}`
+            `/api/students/${params.studentId}/certificates${qs}`,
           );
         } catch {
           // Fall through to global certificates listing
@@ -720,8 +719,8 @@ export const api = {
         rawData && Array.isArray(rawData)
           ? rawData
           : rawData && rawData.items && Array.isArray(rawData.items)
-          ? rawData.items
-          : [];
+            ? rawData.items
+            : [];
 
       // Transform backend User objects to frontend StudentProfile objects if needed
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -782,7 +781,7 @@ export const api = {
 
     try {
       const response = await fetchClient<Record<string, unknown>>(
-        '/api/students/me/profile'
+        '/api/students/me/profile',
       );
       let profile = (response.data || response) as StudentProfile;
 
@@ -801,7 +800,7 @@ export const api = {
       const isForbidden = (error as any)?.message?.includes('403');
       if (isForbidden) {
         console.warn(
-          'Profile access forbidden (403). User might not have a student profile yet.'
+          'Profile access forbidden (403). User might not have a student profile yet.',
         );
       }
 
@@ -856,7 +855,7 @@ export const api = {
     } catch (error) {
       console.warn(
         'API /curriculum failed, checking alternatives or falling back',
-        error
+        error,
       );
       // Try getting it from cohorts if curriculum endpoint doesn't exist
       try {
@@ -884,7 +883,7 @@ export const api = {
     } catch (error) {
       console.warn(
         'API /assignments/submissions failed, returning empty list',
-        error
+        error,
       );
       return [];
     }
@@ -957,6 +956,8 @@ export const api = {
     initialize: async (data: {
       amount: number;
       plan?: 'full' | 'deposit' | 'balance';
+      discountCode?: string;
+      callbackUrl?: string;
     }): Promise<{
       authorizationUrl: string;
       reference: string;
@@ -989,6 +990,7 @@ export const api = {
       password?: string;
       amount?: number;
       plan?: 'full' | 'deposit';
+      discountCode?: string;
       callbackUrl?: string;
     }): Promise<{
       authorizationUrl: string;
@@ -1010,12 +1012,12 @@ export const api = {
           method: 'POST',
           body: JSON.stringify(data),
           skipAuth: true,
-        }
+        },
       );
       return response.data || response;
     },
     verify: async (
-      reference: string
+      reference: string,
     ): Promise<{
       status: string;
       reference: string;
