@@ -7,7 +7,8 @@ import type {
   Submission,
 } from '../types/schema';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.uricreative.com:8448';
+const API_URL =
+  import.meta.env.VITE_API_URL || 'https://api.uricreative.com:8448';
 const USE_MOCK = false;
 const DELAY = 1000;
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -977,7 +978,7 @@ export const api = {
         };
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const response = await fetchClient<any>('/api/payments/initialize', {
+      const response = await fetchClient<any>('/api/payments/initiate', {
         method: 'POST',
         body: JSON.stringify(data || {}),
       });
@@ -1006,15 +1007,46 @@ export const api = {
         };
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const response = await fetchClient<any>(
-        '/api/payments/initialize-public',
-        {
-          method: 'POST',
-          body: JSON.stringify(data),
-          skipAuth: true,
-        },
-      );
-      return response.data || response;
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const response = await fetchClient<any>(
+          '/api/payments/initialize-public',
+          {
+            method: 'POST',
+            body: JSON.stringify(data),
+            skipAuth: true,
+          },
+        );
+        return response.data || response;
+      } catch (error) {
+        console.warn(
+          'initialize-public failed, trying fallback to initiate',
+          error,
+        );
+        try {
+          // Fallback to initiate with skipAuth
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const response = await fetchClient<any>('/api/payments/initiate', {
+            method: 'POST',
+            body: JSON.stringify(data),
+            skipAuth: true,
+          });
+          return response.data || response;
+        } catch (innerError) {
+          console.warn(
+            'initiate failed, trying fallback to initialize',
+            innerError,
+          );
+          // Final fallback to old initialize
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const response = await fetchClient<any>('/api/payments/initialize', {
+            method: 'POST',
+            body: JSON.stringify(data),
+            skipAuth: true,
+          });
+          return response.data || response;
+        }
+      }
     },
     verify: async (
       reference: string,

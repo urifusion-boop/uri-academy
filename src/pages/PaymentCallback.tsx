@@ -46,20 +46,20 @@ export function PaymentCallback() {
           if (response.tokens) {
             localStorage.setItem('token', response.tokens.accessToken);
             localStorage.setItem('refreshToken', response.tokens.refreshToken);
-
+            
             // If it's a new registration (from register page), user might need to set password
             // We can check if we need to set password based on source or user state
             // For now, let's assume if tokens are returned, we might need to set password if it was public init
-            // But usually public init returns tokens?
+            // But usually public init returns tokens? 
             // The backend verify returns tokens if it's a new user or public flow.
             setStatus('setting_password');
           } else {
-            // Existing user payment
-            setStatus('success');
-            addToast('Payment verified successfully!', 'success');
-            setTimeout(() => {
-              navigate('/student');
-            }, 2000);
+             // Existing user payment
+             setStatus('success');
+             addToast('Payment verified successfully!', 'success');
+             setTimeout(() => {
+               navigate('/student');
+             }, 2000);
           }
         } else {
           console.error('Payment verification failed:', response);
@@ -95,7 +95,7 @@ export function PaymentCallback() {
       // Even if it fails, let them in, but warn them
       addToast(
         'Payment successful, but password setup failed. Please use "Forgot Password" later.',
-        'info',
+        'info'
       );
       navigate('/student');
     } finally {
