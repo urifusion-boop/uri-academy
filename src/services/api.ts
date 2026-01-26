@@ -1034,17 +1034,35 @@ export const api = {
           return response.data || response;
         } catch (innerError) {
           console.warn(
-            'initiate failed, trying fallback to initialize',
+            'initiate failed, trying fallback to /api/payments/initialize',
             innerError,
           );
-          // Final fallback to old initialize
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const response = await fetchClient<any>('/payments/initialize/', {
-            method: 'POST',
-            body: JSON.stringify(data),
-            skipAuth: true,
-          });
-          return response.data || response;
+          try {
+            // Fallback to /api/payments/initialize (with /api prefix)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const response = await fetchClient<any>(
+              '/api/payments/initialize/',
+              {
+                method: 'POST',
+                body: JSON.stringify(data),
+                skipAuth: true,
+              },
+            );
+            return response.data || response;
+          } catch (secondInnerError) {
+            console.warn(
+              'api/initialize failed, trying fallback to /payments/initialize',
+              secondInnerError,
+            );
+            // Final fallback to old initialize (no /api prefix)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const response = await fetchClient<any>('/payments/initialize/', {
+              method: 'POST',
+              body: JSON.stringify(data),
+              skipAuth: true,
+            });
+            return response.data || response;
+          }
         }
       }
     },
