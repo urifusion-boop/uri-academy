@@ -978,7 +978,7 @@ export const api = {
         };
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const response = await fetchClient<any>('/api/payments/initiate', {
+      const response = await fetchClient<any>('/api/payments/initiate/', {
         method: 'POST',
         body: JSON.stringify(data || {}),
       });
@@ -1010,7 +1010,7 @@ export const api = {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const response = await fetchClient<any>(
-          '/api/payments/initialize-public',
+          '/api/payments/initialize-public/',
           {
             method: 'POST',
             body: JSON.stringify(data),
@@ -1026,7 +1026,7 @@ export const api = {
         try {
           // Fallback to initiate with skipAuth
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const response = await fetchClient<any>('/api/payments/initiate', {
+          const response = await fetchClient<any>('/api/payments/initiate/', {
             method: 'POST',
             body: JSON.stringify(data),
             skipAuth: true,
@@ -1039,7 +1039,7 @@ export const api = {
           );
           // Final fallback to old initialize
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const response = await fetchClient<any>('/payments/initialize', {
+          const response = await fetchClient<any>('/payments/initialize/', {
             method: 'POST',
             body: JSON.stringify(data),
             skipAuth: true,
