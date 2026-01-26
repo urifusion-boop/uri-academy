@@ -7,8 +7,7 @@ import type {
   Submission,
 } from '../types/schema';
 
-const API_URL =
-  import.meta.env.VITE_API_URL || 'https://api.uricreative.com:8448';
+const API_URL = import.meta.env.VITE_API_URL || '';
 const USE_MOCK = false;
 const DELAY = 1000;
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
