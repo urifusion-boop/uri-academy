@@ -1039,7 +1039,7 @@ export const api = {
           );
           // Final fallback to old initialize
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const response = await fetchClient<any>('/api/payments/initialize', {
+          const response = await fetchClient<any>('/payments/initialize', {
             method: 'POST',
             body: JSON.stringify(data),
             skipAuth: true,
