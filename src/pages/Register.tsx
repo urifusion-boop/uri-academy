@@ -30,26 +30,21 @@ export function Register() {
     const amount = paymentPlan === 'full' ? 35000 : 20000;
     const callbackUrl = `${window.location.origin}/payment/verify?source=register`;
 
-    // Save minimal user info to localStorage as a fallback
+    // Store registration data temporarily (will be used after payment)
     localStorage.setItem(
-      'user',
+      'pendingRegistration',
       JSON.stringify({
         name,
         email,
         phoneNumber: phone,
-        role: 'STUDENT',
-        initials: name
-          .split(' ')
-          .map((n) => n[0])
-          .slice(0, 2)
-          .join('')
-          .toUpperCase(),
-        id: 'pending-id',
+        plan: paymentPlan,
+        amount,
       }),
     );
 
     try {
-      // Initialize Payment via Squad (using same endpoint structure)
+      // Initialize payment WITHOUT creating account first
+      // Account will be created after payment verification
       const response = await api.payments.initializePublic({
         name,
         email,

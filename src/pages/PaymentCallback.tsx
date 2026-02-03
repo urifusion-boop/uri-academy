@@ -42,24 +42,25 @@ export function PaymentCallback() {
       try {
         const response = await api.payments.verify(reference);
         if (response.status === 'success' || response.status === 'PAID') {
-          // Check if we have tokens (meaning new user or login)
+          // Store tokens if provided
           if (response.tokens) {
             localStorage.setItem('token', response.tokens.accessToken);
             localStorage.setItem('refreshToken', response.tokens.refreshToken);
-            
-            // If it's a new registration (from register page), user might need to set password
-            // We can check if we need to set password based on source or user state
-            // For now, let's assume if tokens are returned, we might need to set password if it was public init
-            // But usually public init returns tokens? 
-            // The backend verify returns tokens if it's a new user or public flow.
+          }
+
+          // Check the source to determine if this is a new registration
+          const source = searchParams.get('source');
+
+          if (source === 'register' && response.tokens) {
+            // New registration flow - need to set password
             setStatus('setting_password');
           } else {
-             // Existing user payment
-             setStatus('success');
-             addToast('Payment verified successfully!', 'success');
-             setTimeout(() => {
-               navigate('/student');
-             }, 2000);
+            // Existing user payment or already has password
+            setStatus('success');
+            addToast('Payment verified successfully!', 'success');
+            setTimeout(() => {
+              navigate('/student');
+            }, 2000);
           }
         } else {
           console.error('Payment verification failed:', response);
@@ -80,24 +81,41 @@ export function PaymentCallback() {
     setLoading(true);
 
     try {
-      // Attempt to set password. We assume the backend might accept empty currentPassword
-      // for a newly created user, or we use a specific logic.
-      // If this fails, the user is still logged in and can try later or use forgot password.
-      await api.users.updatePassword({
-        currentPassword: null,
-        newPassword: password,
+      // Set the initial password for new user after payment verification
+      await api.users.setInitialPassword({
+        password,
       });
 
       addToast('Account created successfully!', 'success');
-      navigate('/student');
+
+      // Clear pending registration data
+      localStorage.removeItem('pendingRegistration');
+
+      // Redirect to dashboard
+      setTimeout(() => {
+        navigate('/student');
+      }, 1000);
     } catch (err) {
       console.error('Failed to set password:', err);
-      // Even if it fails, let them in, but warn them
-      addToast(
-        'Payment successful, but password setup failed. Please use "Forgot Password" later.',
-        'info'
-      );
-      navigate('/student');
+
+      // Try updatePassword as fallback for edge cases
+      try {
+        await api.users.updatePassword({
+          currentPassword: null,
+          newPassword: password,
+        });
+        addToast('Account created successfully!', 'success');
+        localStorage.removeItem('pendingRegistration');
+        setTimeout(() => {
+          navigate('/student');
+        }, 1000);
+      } catch (fallbackErr) {
+        console.error('Fallback password update also failed:', fallbackErr);
+        addToast(
+          'Payment successful, but password setup failed. Please contact support or try "Forgot Password".',
+          'error',
+        );
+      }
     } finally {
       setLoading(false);
     }

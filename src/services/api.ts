@@ -297,6 +297,17 @@ export const api = {
         body: JSON.stringify(data),
       });
     },
+    setInitialPassword: async (data: { password: string }) => {
+      // For new users setting password for the first time after payment
+      if (USE_MOCK) {
+        await delay(DELAY);
+        return { success: true };
+      }
+      return fetchClient('/api/auth/set-password', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
     updateNotifications: async (data: ApiPayload) => {
       if (USE_MOCK) {
         await delay(DELAY);
@@ -1006,63 +1017,63 @@ export const api = {
           reference: mockRef,
         };
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // Try the register-and-pay endpoint which handles both registration and payment
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const response = await fetchClient<any>(
-          '/api/payments/initialize-public',
-          {
-            method: 'POST',
-            body: JSON.stringify(data),
-            skipAuth: true,
-          },
-        );
-        return response.data || response;
+        const response = await fetchClient<{
+          authorizationUrl?: string;
+          reference?: string;
+          data?: { authorizationUrl: string; reference: string };
+        }>('/api/auth/register-and-pay', {
+          method: 'POST',
+          body: JSON.stringify(data),
+          skipAuth: true,
+        });
+        const result = response.data || response;
+        return {
+          authorizationUrl: result.authorizationUrl || '',
+          reference: result.reference || '',
+        };
       } catch (error) {
         console.warn(
-          'initialize-public failed, trying fallback to initiate',
+          'register-and-pay failed, trying /api/payments/register',
           error,
         );
         try {
-          // Fallback to initiate with skipAuth
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const response = await fetchClient<any>('/api/payments/initiate', {
+          // Fallback to /api/payments/register
+          const response = await fetchClient<{
+            authorizationUrl?: string;
+            reference?: string;
+            data?: { authorizationUrl: string; reference: string };
+          }>('/api/payments/register', {
             method: 'POST',
             body: JSON.stringify(data),
             skipAuth: true,
           });
-          return response.data || response;
+          const result = response.data || response;
+          return {
+            authorizationUrl: result.authorizationUrl || '',
+            reference: result.reference || '',
+          };
         } catch (innerError) {
           console.warn(
-            'initiate failed, trying fallback to /api/payments/initialize',
+            'payments/register failed, trying /api/payments/initialize-public',
             innerError,
           );
-          try {
-            // Fallback to /api/payments/initialize (with /api prefix)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const response = await fetchClient<any>(
-              '/api/payments/initialize',
-              {
-                method: 'POST',
-                body: JSON.stringify(data),
-                skipAuth: true,
-              },
-            );
-            return response.data || response;
-          } catch (secondInnerError) {
-            console.warn(
-              'api/initialize failed, trying fallback to /payments/initialize',
-              secondInnerError,
-            );
-            // Final fallback to old initialize (no /api prefix)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const response = await fetchClient<any>('/payments/initialize', {
-              method: 'POST',
-              body: JSON.stringify(data),
-              skipAuth: true,
-            });
-            return response.data || response;
-          }
+          // Final fallback to initialize-public
+          const response = await fetchClient<{
+            authorizationUrl?: string;
+            reference?: string;
+            data?: { authorizationUrl: string; reference: string };
+          }>('/api/payments/initialize-public', {
+            method: 'POST',
+            body: JSON.stringify(data),
+            skipAuth: true,
+          });
+          const result = response.data || response;
+          return {
+            authorizationUrl: result.authorizationUrl || '',
+            reference: result.reference || '',
+          };
         }
       }
     },
@@ -1097,6 +1108,7 @@ export const api = {
       }>('/api/payments/verify', {
         method: 'POST',
         body: JSON.stringify({ reference }),
+        skipAuth: true, // No auth needed for verification
       });
       clearUserProfileCache();
       return response;
