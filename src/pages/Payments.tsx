@@ -1,6 +1,6 @@
 import { AlertCircle, Shield, CheckCircle, Clock } from 'lucide-react';
 import { useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import type { StudentProfile } from '../types/schema';
 import { api } from '../services/api';
 import { useToast } from '../context/ToastContext';
@@ -8,6 +8,7 @@ import { useToast } from '../context/ToastContext';
 export function Payments() {
   const [loading, setLoading] = useState(false);
   const { addToast } = useToast();
+  const navigate = useNavigate();
   const { profile } = useOutletContext<{ profile: StudentProfile | null }>();
   const [paymentPlan, setPaymentPlan] = useState<'full' | 'deposit'>('full');
   const [discountCode, setDiscountCode] = useState('');
@@ -76,13 +77,26 @@ export function Payments() {
         discountCode: discountCode.trim() || undefined,
       });
 
-      const { authorizationUrl } = response;
+      if (response.free && response.tokens) {
+        // 100% discount — user is already enrolled, no payment page needed
+        localStorage.setItem('token', response.tokens.accessToken);
+        localStorage.setItem('refreshToken', response.tokens.refreshToken);
+        try {
+          const user = await api.users.getMe();
+          localStorage.setItem('user', JSON.stringify(user));
+        } catch {
+          // non-fatal
+        }
+        addToast("You've been enrolled for free!", 'success');
+        navigate('/student');
+        return;
+      }
 
-      if (!authorizationUrl) {
+      if (!response.authorizationUrl) {
         throw new Error('Payment initialization failed: No URL returned');
       }
 
-      window.location.href = authorizationUrl;
+      window.location.href = response.authorizationUrl;
     } catch (error: unknown) {
       console.error('Payment redirect failed', error);
       let errorMessage = 'Payment initialization failed. Please try again.';

@@ -971,8 +971,10 @@ export const api = {
       discountCode?: string;
       callbackUrl?: string;
     }): Promise<{
-      authorizationUrl: string;
+      authorizationUrl?: string;
       reference: string;
+      free?: boolean;
+      tokens?: { accessToken: string; refreshToken: string };
     }> => {
       if (USE_MOCK) {
         await delay(DELAY);
@@ -1005,8 +1007,10 @@ export const api = {
       discountCode?: string;
       callbackUrl?: string;
     }): Promise<{
-      authorizationUrl: string;
+      authorizationUrl?: string;
       reference: string;
+      free?: boolean;
+      tokens?: { accessToken: string; refreshToken: string };
     }> => {
       if (USE_MOCK) {
         await delay(DELAY);
@@ -1017,21 +1021,27 @@ export const api = {
           reference: mockRef,
         };
       }
+      type PayInitResponse = {
+        authorizationUrl?: string;
+        reference?: string;
+        free?: boolean;
+        tokens?: { accessToken: string; refreshToken: string };
+        data?: PayInitResponse;
+      };
+      const extractResult = (response: PayInitResponse): PayInitResponse =>
+        response.data || response;
       // Try the register-and-pay endpoint which handles both registration and payment
       try {
-        const response = await fetchClient<{
-          authorizationUrl?: string;
-          reference?: string;
-          data?: { authorizationUrl: string; reference: string };
-        }>('/api/auth/register-and-pay', {
-          method: 'POST',
-          body: JSON.stringify(data),
-          skipAuth: true,
-        });
-        const result = response.data || response;
+        const response = await fetchClient<PayInitResponse>(
+          '/api/auth/register-and-pay',
+          { method: 'POST', body: JSON.stringify(data), skipAuth: true },
+        );
+        const result = extractResult(response);
         return {
-          authorizationUrl: result.authorizationUrl || '',
+          authorizationUrl: result.authorizationUrl,
           reference: result.reference || '',
+          free: result.free,
+          tokens: result.tokens,
         };
       } catch (error) {
         console.warn(
@@ -1040,19 +1050,16 @@ export const api = {
         );
         try {
           // Fallback to /api/payments/register
-          const response = await fetchClient<{
-            authorizationUrl?: string;
-            reference?: string;
-            data?: { authorizationUrl: string; reference: string };
-          }>('/api/payments/register', {
-            method: 'POST',
-            body: JSON.stringify(data),
-            skipAuth: true,
-          });
-          const result = response.data || response;
+          const response = await fetchClient<PayInitResponse>(
+            '/api/payments/register',
+            { method: 'POST', body: JSON.stringify(data), skipAuth: true },
+          );
+          const result = extractResult(response);
           return {
-            authorizationUrl: result.authorizationUrl || '',
+            authorizationUrl: result.authorizationUrl,
             reference: result.reference || '',
+            free: result.free,
+            tokens: result.tokens,
           };
         } catch (innerError) {
           console.warn(
@@ -1060,19 +1067,16 @@ export const api = {
             innerError,
           );
           // Final fallback to initialize-public
-          const response = await fetchClient<{
-            authorizationUrl?: string;
-            reference?: string;
-            data?: { authorizationUrl: string; reference: string };
-          }>('/api/payments/initialize-public', {
-            method: 'POST',
-            body: JSON.stringify(data),
-            skipAuth: true,
-          });
-          const result = response.data || response;
+          const response = await fetchClient<PayInitResponse>(
+            '/api/payments/initialize-public',
+            { method: 'POST', body: JSON.stringify(data), skipAuth: true },
+          );
+          const result = extractResult(response);
           return {
-            authorizationUrl: result.authorizationUrl || '',
+            authorizationUrl: result.authorizationUrl,
             reference: result.reference || '',
+            free: result.free,
+            tokens: result.tokens,
           };
         }
       }

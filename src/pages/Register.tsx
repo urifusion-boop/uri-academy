@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   User as UserIcon,
   Mail,
@@ -13,6 +13,7 @@ import { api } from '../services/api';
 
 export function Register() {
   const { addToast } = useToast();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<'plan' | 'details'>('plan');
   const [paymentPlan, setPaymentPlan] = useState<'full' | 'deposit'>('full');
@@ -55,16 +56,29 @@ export function Register() {
         discountCode: discountCode.trim() || undefined,
       });
 
-      const { authorizationUrl } = response;
+      if (response.free && response.tokens) {
+        // 100% discount — user is already enrolled, no payment page needed
+        localStorage.setItem('token', response.tokens.accessToken);
+        localStorage.setItem('refreshToken', response.tokens.refreshToken);
+        try {
+          const user = await api.users.getMe();
+          localStorage.setItem('user', JSON.stringify(user));
+        } catch {
+          // non-fatal: dashboard will fetch user on load
+        }
+        addToast("You've been enrolled for free!", 'success');
+        navigate('/student');
+        return;
+      }
 
-      if (!authorizationUrl) {
+      if (!response.authorizationUrl) {
         throw new Error(
           'Payment initialization failed: No authorization URL returned',
         );
       }
 
       // Redirect to Squad Payment Page
-      window.location.href = authorizationUrl;
+      window.location.href = response.authorizationUrl;
     } catch (err: unknown) {
       console.error('Payment initialization failed:', err);
       let errorMessage = 'Failed to initialize payment. Please try again.';
