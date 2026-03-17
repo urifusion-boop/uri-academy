@@ -11,20 +11,23 @@ module.exports = async function (context, req) {
   const protocol = backendUrl.startsWith('https') ? https : http;
 
   return new Promise((resolve) => {
+    // Prepare request body
+    const bodyString = req.body ? (typeof req.body === 'string' ? req.body : JSON.stringify(req.body)) : '';
+
     const options = {
       method: req.method,
       headers: {
-        ...req.headers,
-        host: '20.164.0.168',
+        'Content-Type': req.headers['content-type'] || 'application/json',
+        'Authorization': req.headers['authorization'] || '',
       },
       // Allow self-signed certificates
       rejectUnauthorized: false,
     };
 
-    // Remove host header to avoid conflicts
-    delete options.headers['host'];
-    delete options.headers['x-forwarded-host'];
-    delete options.headers['x-forwarded-proto'];
+    // Add Content-Length if there's a body
+    if (bodyString) {
+      options.headers['Content-Length'] = Buffer.byteLength(bodyString);
+    }
 
     const proxyReq = protocol.request(backendUrl, options, (proxyRes) => {
       let body = '';
@@ -52,14 +55,13 @@ module.exports = async function (context, req) {
       context.log.error('Proxy error:', error);
       context.res = {
         status: 500,
-        body: { error: 'Proxy request failed', details: error.message },
+        body: JSON.stringify({ error: 'Proxy request failed', details: error.message }),
       };
       resolve();
     });
 
     // Forward the request body if present
-    if (req.body) {
-      const bodyString = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+    if (bodyString) {
       proxyReq.write(bodyString);
     }
 
