@@ -38,7 +38,7 @@ jobs:
           output_location: "dist"
           ###### End of Repository/Build Configurations ######
         env:
-          VITE_API_URL: https://20.164.0.168:8448
+          VITE_API_URL: https://20.164.0.168/academy
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
