@@ -2,7 +2,10 @@ const https = require('https');
 const http = require('http');
 
 module.exports = async function (context, req) {
-  const path = context.bindingData.path || '';
+  let path = context.bindingData.path || "";
+
+  // Strip leading /api if present to avoid double /api prefix
+  path = path.replace(/^api\//, "");
   const backendUrl = `https://20.164.0.168/academy/${path}`;
 
   context.log(`Proxying request to: ${backendUrl}`);
