@@ -34,11 +34,11 @@ jobs:
           action: "upload"
           ###### Repository/Build Configurations ######
           app_location: "/"
-          api_location: ""
+          api_location: "api"
           output_location: "dist"
           ###### End of Repository/Build Configurations ######
         env:
-          VITE_API_URL: https://20.164.0.168/academy
+          VITE_API_URL: /api
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
