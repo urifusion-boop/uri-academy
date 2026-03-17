@@ -48,10 +48,16 @@ async function fetchClient<T>(
     url: `${API_URL}${endpoint}`,
   });
 
-  // Normalize URL to prevent double /api prefix if API_URL includes it
-  let finalUrl = `${API_URL}${endpoint}`;
-  if (API_URL && API_URL.endsWith('/api') && endpoint.startsWith('/api/')) {
-    finalUrl = `${API_URL}${endpoint.substring(4)}`;
+  // Normalize URL to prevent double /api prefix
+  // If API_URL is just "/api" (relative), we need to handle it specially
+  let finalUrl;
+  if (API_URL === '/api') {
+    // API_URL is the Azure Functions proxy at /api, endpoints already include /api
+    // So we need to strip the leading /api from the endpoint
+    finalUrl = `${API_URL}${endpoint.replace(/^\/api/, '')}`;
+  } else {
+    // Standard case: concatenate API_URL and endpoint
+    finalUrl = `${API_URL}${endpoint}`;
   }
 
   // Simple exponential backoff retry mechanism with jitter
