@@ -12,9 +12,9 @@ export default function AuthLayout({
   return (
     <div className="h-screen bg-white flex overflow-hidden">
       {/* Left Side - Form */}
-      <div className="flex-1 flex flex-col py-10 px-4 sm:px-10 lg:flex-none lg:w-1/2 xl:w-5/12 overflow-y-auto">
-        {/* Back to home */}
-        <div className="mb-6">
+      <div className="flex-1 relative flex flex-col px-4 sm:px-10 lg:flex-none lg:w-1/2 xl:w-5/12 overflow-y-auto">
+        {/* Back to home — pinned top-left */}
+        <div className="absolute top-6 left-6 sm:left-10">
           <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors">
             <ArrowLeft className="w-4 h-4" />
             Back to home
@@ -22,14 +22,14 @@ export default function AuthLayout({
         </div>
 
         <div className="mx-auto w-full max-w-sm lg:w-96 flex-1 flex flex-col justify-center">
-          <div className="mb-8">
+          <div className="mb-6">
             <Link href="/">
               <Image
                 src="/assets/image.png"
                 alt="Uri Academy"
-                width={120}
-                height={120}
-                className="h-24 w-auto object-contain"
+                width={180}
+                height={180}
+                className="h-28 w-auto object-contain"
                 priority
               />
             </Link>
