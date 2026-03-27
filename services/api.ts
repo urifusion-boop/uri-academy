@@ -159,10 +159,12 @@ async function fetchClient<T>(
 const inflightRequests = new Map<string, Promise<unknown>>();
 let userProfileCache: StudentProfile | null = null;
 let userProfileCacheTimestamp = 0;
+let profileFetchForbidden = false; // skip API after first 403
 
 export const clearUserProfileCache = () => {
   userProfileCache = null;
   userProfileCacheTimestamp = 0;
+  profileFetchForbidden = false;
   localStorage.removeItem('user_profile');
 };
 
@@ -835,6 +837,7 @@ export const api = {
     }
 
     try {
+      if (profileFetchForbidden) throw new Error('403 cached');
       const response = await fetchClient<Record<string, unknown>>(
         '/api/students/me/profile',
       );
@@ -848,15 +851,11 @@ export const api = {
       localStorage.setItem('user_profile', JSON.stringify(profile));
       return profile;
     } catch (error) {
-      console.warn('Failed to fetch profile, attempting fallback', error);
-
       // Handle 403 Forbidden specifically - often implies role mismatch or missing profile
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const isForbidden = (error as any)?.message?.includes('403');
       if (isForbidden) {
-        console.warn(
-          'Profile access forbidden (403). User might not have a student profile yet.',
-        );
+        profileFetchForbidden = true; // stop retrying this session
       }
 
       // Fallback 1: Stored full profile

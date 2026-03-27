@@ -7,8 +7,6 @@ import type { StudentProfile } from '@/types/schema';
 import {
   Users,
   BookOpen,
-  TrendingUp,
-  DollarSign,
   CheckCircle2,
   Clock,
   ArrowRight,
@@ -76,65 +74,25 @@ export default function AdminHome() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <Users className="w-6 h-6 text-blue-600" />
-            </div>
-            <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-              +12%
-            </span>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-6">
+          <div className="p-4 bg-blue-50 rounded-xl shrink-0">
+            <Users className="w-8 h-8 text-blue-600" />
           </div>
-          <p className="text-sm text-gray-500 font-medium">Total Students</p>
-          <h3 className="text-2xl font-bold text-gray-900 mt-1">
-            {stats.totalStudents}
-          </h3>
+          <div>
+            <p className="text-sm text-gray-500 font-medium mb-1">Total Students</p>
+            <h3 className="text-4xl font-bold text-gray-900">{stats.totalStudents}</h3>
+          </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-purple-50 rounded-lg">
-              <BookOpen className="w-6 h-6 text-purple-600" />
-            </div>
-            <span className="text-xs font-medium text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
-              Active
-            </span>
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-6">
+          <div className="p-4 bg-brand-50 rounded-xl shrink-0">
+            <BookOpen className="w-8 h-8 text-brand-600" />
           </div>
-          <p className="text-sm text-gray-500 font-medium">Active Cohorts</p>
-          <h3 className="text-2xl font-bold text-gray-900 mt-1">
-            {stats.activeCohorts}
-          </h3>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-amber-50 rounded-lg">
-              <TrendingUp className="w-6 h-6 text-amber-600" />
-            </div>
-            <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-              +5%
-            </span>
+          <div>
+            <p className="text-sm text-gray-500 font-medium mb-1">Active Cohorts</p>
+            <h3 className="text-4xl font-bold text-gray-900">{stats.activeCohorts}</h3>
           </div>
-          <p className="text-sm text-gray-500 font-medium">Completion Rate</p>
-          <h3 className="text-2xl font-bold text-gray-900 mt-1">
-            {stats.completionRate}
-          </h3>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-green-50 rounded-lg">
-              <DollarSign className="w-6 h-6 text-green-600" />
-            </div>
-            <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-              +18%
-            </span>
-          </div>
-          <p className="text-sm text-gray-500 font-medium">Total Revenue</p>
-          <h3 className="text-2xl font-bold text-gray-900 mt-1">
-            {stats.revenue}
-          </h3>
         </div>
       </div>
 

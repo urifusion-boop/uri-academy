@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LogOut,
@@ -87,14 +88,18 @@ export default function AdminLayout({
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       {/* Top Nav Bar */}
-      <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b border-gray-100 shadow-sm">
+      <header className="fixed top-0 left-0 right-0 z-50 h-24 bg-white border-b border-gray-100 shadow-sm">
         <div className="h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          {/* Left: Brand */}
-          <Link
-            href="/admin"
-            className="flex items-center shrink-0 text-brand-700 font-bold text-lg tracking-tight hover:text-brand-800 transition-colors"
-          >
-            URI Academy <span className="ml-2 text-xs font-semibold text-gray-400 uppercase tracking-widest">Admin</span>
+          {/* Left: Logo */}
+          <Link href="/admin" className="flex items-center shrink-0">
+            <Image
+              src="/assets/image.png"
+              alt="URI Academy"
+              width={120}
+              height={120}
+              className="h-20 w-auto object-contain"
+              priority
+            />
           </Link>
 
           {/* Center: Desktop Nav Links */}
@@ -203,7 +208,7 @@ export default function AdminLayout({
       </header>
 
       {/* Main Content */}
-      <main className="pt-16">
+      <main className="pt-24">
         <div className="px-4 sm:px-6 lg:px-8 py-8">
           <div className="max-w-7xl mx-auto">
             {children}

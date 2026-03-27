@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { ToastProvider } from '@/context/ToastContext';
 import { AuthProvider } from '@/context/AuthContext';
+import { AuthHandler } from '@/components/AuthHandler';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 
@@ -26,6 +27,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <TooltipProvider>
         <AuthProvider>
           <ToastProvider>
+            <AuthHandler />
             {children}
             <Toaster />
             <Sonner />
