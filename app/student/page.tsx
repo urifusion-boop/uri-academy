@@ -134,7 +134,7 @@ export default function StudentHome() {
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-brand-600 to-brand-800 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-brand-600 to-brand-800 rounded-3xl py-6 px-6 text-white shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-5 rounded-full -ml-10 -mb-10 blur-3xl"></div>
 
@@ -144,8 +144,8 @@ export default function StudentHome() {
           </h1>
           <p className="text-brand-100 max-w-xl mb-8">
             You're making great progress. You've completed{' '}
-            {profile?.progress || 0}% of the{' '}
-            {profile?.cohort?.name || 'Sales and Growth Executive'} program.
+            {profile?.progress || 0}%
+            {profile?.cohort?.name ? ` of the ${profile.cohort.name} program` : ''}.
             Keep it up!
           </p>
 
@@ -166,7 +166,7 @@ export default function StudentHome() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-3 gap-4">
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all group">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center group-hover:bg-brand-600 group-hover:text-white transition-colors">
@@ -215,12 +215,6 @@ export default function StudentHome() {
                   .pop()} - ${formatDate(nextSession.endTime).split(' ').pop()}`
               : 'Check back later'}
           </p>
-          <button
-            type="button"
-            className="mt-4 text-purple-600 text-sm font-semibold hover:text-purple-700"
-          >
-            Add to Calendar
-          </button>
         </div>
 
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all group">
@@ -248,7 +242,7 @@ export default function StudentHome() {
       {/* Recent Activity / Next Up */}
       <div className="grid lg:grid-cols-2 gap-8">
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-gray-900">Up Next</h2>
             <Link href="/student/curriculum"
               className="text-brand-600 text-sm font-semibold hover:text-brand-700"
@@ -288,7 +282,7 @@ export default function StudentHome() {
         </div>
 
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-gray-900">
               Upcoming Assignments
             </h2>
@@ -317,12 +311,12 @@ export default function StudentHome() {
                 <p className="text-sm text-gray-600 mb-3">
                   {assignment.description}
                 </p>
-                <button
-                  type="button"
+                <Link
+                  href="/student/assignments"
                   className="text-sm font-semibold text-orange-700 hover:text-orange-800 flex items-center gap-1"
                 >
                   Submit Now <ArrowRight className="w-4 h-4" />
-                </button>
+                </Link>
               </div>
             ))}
             {upcomingAssignments.length === 0 && (

@@ -52,37 +52,14 @@ export default function Capstone() {
 
   const uploadFile = async (fileToUpload: File): Promise<string | null> => {
     try {
-      setUploadStatus('Requesting upload URL...');
-      const resp = (await api.files.upload({
-        fileName: fileToUpload.name,
-        contentType: fileToUpload.type || 'application/octet-stream',
-      })) as { fileRef: string; url: string };
-      if (!resp || !resp.fileRef) {
-        setUploadStatus('');
-        addToast('Failed to get upload URL', 'error');
-        return null;
-      }
       setUploadStatus('Uploading...');
-      if (resp.url) {
-        const putRes = await fetch(resp.url, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': fileToUpload.type || 'application/octet-stream',
-          },
-          body: fileToUpload,
-        });
-        if (!putRes.ok) {
-          setUploadStatus('');
-          addToast('Upload failed', 'error');
-          return null;
-        }
-      }
-      setFileRef(resp.fileRef);
+      const { url } = await api.files.upload(fileToUpload);
+      setFileRef(url);
       setUploadStatus('Uploaded. Ready to submit.');
-      return resp.fileRef;
+      return url;
     } catch {
       setUploadStatus('');
-      addToast('Upload error', 'error');
+      addToast('Upload failed', 'error');
       return null;
     }
   };

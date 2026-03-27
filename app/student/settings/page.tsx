@@ -18,6 +18,7 @@ import {
 import { api } from '@/services/api';
 import type { StudentProfile } from '@/types/schema';
 import { useToast } from '@/context/ToastContext';
+import { getErrorMessage } from '@/utils/handleApiError';
 
 export default function Settings() {
   const { addToast } = useToast();
@@ -82,7 +83,10 @@ export default function Settings() {
         }
       } catch (error) {
         console.error('Failed to fetch profile:', error);
-        addToast('Failed to load profile settings', 'error');
+        addToast(getErrorMessage(error), 'error');
+        if (error instanceof Error && error.message.includes('401')) {
+          addToast('Your session has expired. Please log in again.', 'error');
+        }
       } finally {
         setDataLoading(false);
       }
@@ -101,8 +105,8 @@ export default function Settings() {
         location: formData.location,
       });
       addToast('Profile updated successfully', 'success');
-    } catch {
-      addToast('Failed to update profile', 'error');
+    } catch (err) {
+      addToast(getErrorMessage(err), 'error');
     } finally {
       setLoading(false);
     }
@@ -125,8 +129,8 @@ export default function Settings() {
         newPassword: '',
         confirmPassword: '',
       });
-    } catch {
-      addToast('Failed to update password', 'error');
+    } catch (err) {
+      addToast(getErrorMessage(err), 'error');
     } finally {
       setLoading(false);
     }
@@ -137,8 +141,8 @@ export default function Settings() {
     try {
       await api.users.updateNotifications(notificationSettings);
       addToast('Notification preferences saved', 'success');
-    } catch {
-      addToast('Failed to update notifications', 'error');
+    } catch (err) {
+      addToast(getErrorMessage(err), 'error');
     } finally {
       setLoading(false);
     }

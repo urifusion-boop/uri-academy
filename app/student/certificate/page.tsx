@@ -9,6 +9,7 @@ import { formatDate } from '@/utils/date';
 export default function Certificate() {
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
+  const [assignments, setAssignments] = useState<{ id: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,6 +30,9 @@ export default function Certificate() {
             : [];
           setCertificates(items);
         }
+
+        const assignmentsData = await api.assignments.list().catch(() => []);
+        setAssignments(Array.isArray(assignmentsData) ? assignmentsData : []);
       } catch (err) {
         console.error('Failed to fetch certificates:', err);
       } finally {
@@ -41,6 +45,8 @@ export default function Certificate() {
   if (loading) {
     return <div className="p-8 text-center">Loading certificate data...</div>;
   }
+
+  const totalAssignments = assignments.length;
 
   // If user has certificates, show them
   if (certificates.length > 0) {
@@ -83,9 +89,10 @@ export default function Certificate() {
   // Fallback: Show progress toward certificate
   const completedAssignments =
     profile?.submissions?.filter((s) => s.score !== null).length || 0;
-  // Hardcoded total for now as we don't have assignment count handy without fetching all assignments
-  // But we can approximate or just show count
-  const assignmentProgress = Math.min((completedAssignments / 8) * 100, 100); // Assume 8 assignments
+  const assignmentProgress = Math.min(
+    (completedAssignments / Math.max(totalAssignments, 1)) * 100,
+    100
+  );
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -107,7 +114,7 @@ export default function Certificate() {
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-600">Assignments Graded</span>
             <span className="font-bold text-gray-900">
-              {completedAssignments} / 8
+              {completedAssignments} / {totalAssignments}
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">

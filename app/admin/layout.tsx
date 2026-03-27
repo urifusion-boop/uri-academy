@@ -3,31 +3,24 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  LayoutDashboard,
-  Users,
-  Layers,
-  ClipboardList,
-  UploadCloud,
-  FileCheck,
-  Award,
   LogOut,
   Menu,
+  X,
   UserCog,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { api } from '@/services/api';
-import Image from 'next/image';
 import type { User } from '@/types/schema';
 
-const sidebarItems = [
-  { icon: LayoutDashboard, label: 'Admin Overview', href: '/admin' },
-  { icon: Users, label: 'Students', href: '/admin/students' },
-  { icon: Layers, label: 'Cohorts', href: '/admin/cohorts' },
-  { icon: ClipboardList, label: 'Assignments', href: '/admin/assignments' },
-  { icon: UploadCloud, label: 'Content', href: '/admin/content' },
-  { icon: FileCheck, label: 'Submissions', href: '/admin/submissions' },
-  { icon: Award, label: 'Certificates', href: '/admin/certificates' },
+const navItems = [
+  { label: 'Overview', href: '/admin' },
+  { label: 'Students', href: '/admin/students' },
+  { label: 'Cohorts', href: '/admin/cohorts' },
+  { label: 'Assignments', href: '/admin/assignments' },
+  { label: 'Content', href: '/admin/content' },
+  { label: 'Submissions', href: '/admin/submissions' },
+  { label: 'Certificates', href: '/admin/certificates' },
 ];
 
 export default function AdminLayout({
@@ -35,7 +28,8 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<User | null>(() => {
     if (typeof window !== 'undefined') {
       const storedUser = localStorage.getItem('user');
@@ -47,6 +41,12 @@ export default function AdminLayout({
   const router = useRouter();
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+    setAuthChecked(true);
     const fetchUser = async () => {
       try {
         const userData = await api.users.getMe();
@@ -57,7 +57,7 @@ export default function AdminLayout({
       }
     };
     fetchUser();
-  }, []);
+  }, [router]);
 
   const handleLogout = async () => {
     try {
@@ -72,122 +72,144 @@ export default function AdminLayout({
     }
   };
 
+  const initials = user?.initials || (user?.name
+    ? user.name.trim().split(/\s+/).map((p) => p[0]).join('').toUpperCase().slice(0, 2)
+    : null);
+
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 flex font-sans">
-      {/* Mobile Sidebar Overlay */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-40 md:hidden transition-opacity"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          'fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-100 shadow-xl transform transition-transform duration-300 ease-in-out flex flex-col h-full shrink-0',
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-        )}
-      >
-        <div className="h-28 flex items-center px-8 border-b border-gray-50">
-          <Link href="/admin" className="flex items-center gap-3 group">
-            <Image
-              src="/assets/image.png"
-              alt="Uri Academy"
-              width={160}
-              height={160}
-              className="h-24 w-auto object-contain group-hover:scale-105 transition-transform"
-              priority
-            />
-          </Link>
-        </div>
-
-        <nav className="flex-1 p-6 space-y-1 overflow-y-auto">
-          <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-            Management
-          </p>
-          {sidebarItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative',
-                  isActive
-                    ? 'bg-brand-50 text-brand-700 shadow-sm'
-                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-                )}
-                onClick={() => setIsSidebarOpen(false)}
-              >
-                {isActive && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-brand-600 rounded-r-full"></div>
-                )}
-                <item.icon
-                  className={cn(
-                    'w-5 h-5 transition-colors',
-                    isActive
-                      ? 'text-brand-600'
-                      : 'text-gray-400 group-hover:text-gray-600'
-                  )}
-                />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="p-6 border-t border-gray-50">
-          <div className="bg-gray-50 rounded-xl p-4 mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-brand-700 font-bold border border-gray-100 shadow-sm">
-                {user?.initials || <UserCog className="w-5 h-5" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-900 truncate">
-                  {user?.name || 'Admin User'}
-                </p>
-                <p className="text-xs text-gray-500 truncate">
-                  {user?.email || 'admin@uri.com'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
+    <div className="min-h-screen bg-gray-50 font-sans">
+      {/* Top Nav Bar */}
+      <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b border-gray-100 shadow-sm">
+        <div className="h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+          {/* Left: Brand */}
+          <Link
+            href="/admin"
+            className="flex items-center shrink-0 text-brand-700 font-bold text-lg tracking-tight hover:text-brand-800 transition-colors"
           >
-            <LogOut className="w-4 h-4" />
-            Sign Out
-          </button>
+            URI Academy <span className="ml-2 text-xs font-semibold text-gray-400 uppercase tracking-widest">Admin</span>
+          </Link>
+
+          {/* Center: Desktop Nav Links */}
+          <nav className="hidden md:flex items-center gap-1">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                    isActive
+                      ? 'bg-brand-50 text-brand-700'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Right: Admin info + Logout */}
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2">
+              <div className="w-8 h-8 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 font-bold text-xs">
+                {initials || <UserCog className="w-4 h-4" />}
+              </div>
+              <span className="text-sm font-medium text-gray-900 max-w-[120px] truncate">
+                {user?.name || 'Admin User'}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </button>
+
+            {/* Mobile hamburger */}
+            <button
+              type="button"
+              className="md:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
+            </button>
+          </div>
         </div>
-      </aside>
+
+        {/* Mobile Dropdown Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-white border-b border-gray-100 shadow-lg">
+            <nav className="px-4 py-3 space-y-1">
+              {navItems.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      'block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-brand-50 text-brand-700'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    )}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+              <div className="pt-2 border-t border-gray-100 mt-2">
+                <div className="flex items-center gap-2 px-3 py-2 mb-1">
+                  <div className="w-7 h-7 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 font-bold text-xs">
+                    {initials || <UserCog className="w-3.5 h-3.5" />}
+                  </div>
+                  <span className="text-sm font-medium text-gray-900 truncate">
+                    {user?.name || 'Admin User'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleLogout();
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              </div>
+            </nav>
+          </div>
+        )}
+      </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 bg-gray-50/50 md:pl-72">
-        <header className="h-20 bg-white/80 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-30 flex items-center justify-between px-4 lg:px-8">
-          <button
-            className="md:hidden p-2 -ml-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
-            onClick={() => setIsSidebarOpen(true)}
-            aria-label="Open sidebar"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-
-          <div className="flex items-center gap-4 ml-auto">
-            <div className="text-right">
-              <p className="text-sm font-bold text-gray-900">
-                Administrator Panel
-              </p>
-            </div>
+      <main className="pt-16">
+        <div className="px-4 sm:px-6 lg:px-8 py-8">
+          <div className="max-w-7xl mx-auto">
+            {children}
           </div>
-        </header>
-
-        <main className="flex-1 p-4 lg:p-8 overflow-y-auto">
-          {children}
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

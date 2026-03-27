@@ -76,7 +76,7 @@ export default function AdminHome() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-blue-50 rounded-lg">
@@ -228,11 +228,6 @@ export default function AdminHome() {
                 No pending tasks.
               </div>
             )}
-          </div>
-          <div className="p-4 bg-gray-50 border-t border-gray-100">
-            <button className="w-full py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-              View All Tasks
-            </button>
           </div>
         </div>
       </div>

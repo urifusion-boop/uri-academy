@@ -7,6 +7,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { api } from '@/services/api';
 import { useToast } from '@/context/ToastContext';
+import { getErrorMessage } from '@/utils/handleApiError';
 
 export default function ResetPassword() {
   return (
@@ -61,7 +62,7 @@ function ResetPasswordForm() {
       router.push('/login');
     } catch (err) {
       console.error('Password reset failed:', err);
-      addToast('This link is invalid or has expired. Please request a new one.', 'error');
+      addToast(getErrorMessage(err), 'error');
     } finally {
       setLoading(false);
     }

@@ -5,6 +5,7 @@ import { BarChart3, TrendingUp } from 'lucide-react';
 import { api } from '@/services/api';
 import type { StudentProfile, Assignment, Submission } from '@/types/schema';
 import { useToast } from '@/context/ToastContext';
+import { getErrorMessage } from '@/utils/handleApiError';
 
 export default function MyGrades() {
   const { addToast } = useToast();
@@ -30,7 +31,11 @@ export default function MyGrades() {
         setSubmissions(Array.isArray(submissionsList) ? submissionsList : []);
       } catch (err) {
         console.error('Failed to fetch grades data:', err);
-        addToast('Failed to load grades', 'error');
+        const msg = getErrorMessage(err);
+        addToast(msg, 'error');
+        if (err instanceof Error && err.message.includes('401')) {
+          addToast('Your session has expired. Please log in again.', 'error');
+        }
       } finally {
         setLoading(false);
       }

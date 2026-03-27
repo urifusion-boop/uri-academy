@@ -7,6 +7,8 @@ import { useState } from 'react';
 import { api } from '@/services/api';
 import type { User } from '@/types/schema';
 import { useToast } from '@/context/ToastContext';
+import { useAuth } from '@/context/AuthContext';
+import { getErrorMessage } from '@/utils/handleApiError';
 
 interface AuthResponse {
   token?: string;
@@ -25,6 +27,7 @@ interface AuthResponse {
 export default function Login() {
   const router = useRouter();
   const { addToast } = useToast();
+  const { setAuth } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -67,6 +70,7 @@ export default function Login() {
 
         if (user) {
           localStorage.setItem('user', JSON.stringify(user));
+          setAuth(token, user);
           addToast('Successfully logged in', 'success');
 
           // Redirect based on role
@@ -88,26 +92,7 @@ export default function Login() {
       }
     } catch (err) {
       console.error('Login failed:', err);
-      let errorMessage = 'Failed to login';
-
-      if (err instanceof Error) {
-        // Map common errors to user-friendly messages
-        if (
-          err.message.includes('401') ||
-          err.message.includes('403') ||
-          err.message.toLowerCase().includes('invalid')
-        ) {
-          errorMessage = 'Invalid email or password';
-        } else if (err.message.includes('404')) {
-          errorMessage = 'Login service unavailable';
-        } else if (err.message.includes('500')) {
-          errorMessage = 'Server error. Please try again later.';
-        } else {
-          errorMessage = err.message;
-        }
-      }
-
-      addToast(errorMessage, 'error');
+      addToast(getErrorMessage(err), 'error');
     } finally {
       setLoading(false);
     }

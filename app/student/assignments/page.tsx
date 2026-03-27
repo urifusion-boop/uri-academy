@@ -6,6 +6,7 @@ import { api } from '@/services/api';
 import type { Assignment, StudentProfile, Submission } from '@/types/schema';
 import { formatDate } from '@/utils/date';
 import { useToast } from '@/context/ToastContext';
+import { getErrorMessage } from '@/utils/handleApiError';
 
 export default function Assignments() {
   const { addToast } = useToast();
@@ -45,6 +46,9 @@ export default function Assignments() {
         }
       } catch (error) {
         console.error('Failed to fetch assignments data:', error);
+        if (error instanceof Error && error.message.includes('401')) {
+          addToast('Your session has expired. Please log in again.', 'error');
+        }
         setAssignments([]);
       } finally {
         setLoading(false);
@@ -72,9 +76,9 @@ export default function Assignments() {
       setFileRef(url);
       setUploadStatus('Uploaded. Ready to submit.');
       return url;
-    } catch {
+    } catch (err) {
       setUploadStatus('');
-      addToast('Upload failed', 'error');
+      addToast(getErrorMessage(err), 'error');
       return null;
     }
   };
@@ -141,8 +145,8 @@ export default function Assignments() {
       }
       setSubmittingFor(null);
       addToast('Assignment submitted successfully', 'success');
-    } catch {
-      addToast('Failed to submit assignment', 'error');
+    } catch (err) {
+      addToast(getErrorMessage(err), 'error');
     } finally {
       setSubmitLoading(false);
     }

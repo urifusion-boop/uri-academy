@@ -12,6 +12,7 @@ import { api } from '@/services/api';
 import type { Submission } from '@/types/schema';
 import { formatDate } from '@/utils/date';
 import { useToast } from '@/context/ToastContext';
+import { getErrorMessage } from '@/utils/handleApiError';
 
 export default function AdminSubmissions() {
   const { addToast } = useToast();
@@ -33,41 +34,9 @@ export default function AdminSubmissions() {
 
   const uploadCertFile = async (file: File) => {
     try {
-      setCertUploadStatus('Requesting upload URL...');
-      // 1. Get upload URL
-      const resp = (await api.files.upload({
-        fileName: file.name,
-        contentType: file.type || 'application/pdf',
-      })) as { fileRef: string; url: string };
-
-      if (!resp || !resp.fileRef) {
-        setCertUploadStatus('');
-        addToast('Failed to get upload URL', 'error');
-        return;
-      }
-
-      // 2. Upload file
       setCertUploadStatus('Uploading file...');
-      if (resp.url) {
-        const putRes = await fetch(resp.url, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': file.type || 'application/pdf',
-          },
-          body: file,
-        });
-
-        if (!putRes.ok) {
-          setCertUploadStatus('');
-          addToast('Upload failed', 'error');
-          return;
-        }
-      }
-
-      // 3. Get download URL
-      setCertUploadStatus('Getting public URL...');
-      const downloadUrl = await api.files.getDownloadUrl(resp.fileRef);
-      setCertFileURL(downloadUrl);
+      const { url } = await api.files.upload(file);
+      setCertFileURL(url);
       setCertUploadStatus('File uploaded!');
     } catch (e) {
       console.error('Cert upload error', e);
@@ -168,7 +137,7 @@ export default function AdminSubmissions() {
       addToast('Submission graded successfully', 'success');
     } catch (err) {
       console.error('Approve (grade) failed:', err);
-      addToast('Failed to approve/grade submission', 'error');
+      addToast(getErrorMessage(err), 'error');
     } finally {
       setGrading(false);
     }
@@ -189,7 +158,7 @@ export default function AdminSubmissions() {
       addToast('Submission rejected successfully', 'success');
     } catch (err) {
       console.error('Reject failed:', err);
-      addToast('Failed to reject submission', 'error');
+      addToast(getErrorMessage(err), 'error');
     }
   };
 
@@ -420,7 +389,7 @@ export default function AdminSubmissions() {
                   addToast('Certificate issued successfully', 'success');
                 } catch (err) {
                   console.error('Issue certificate failed:', err);
-                  addToast('Failed to issue certificate', 'error');
+                  addToast(getErrorMessage(err), 'error');
                 } finally {
                   setIssuing(false);
                 }
