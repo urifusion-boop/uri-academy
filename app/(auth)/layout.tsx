@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, ArrowLeft } from 'lucide-react';
 
 export default function AuthLayout({
   children,
@@ -12,16 +12,24 @@ export default function AuthLayout({
   return (
     <div className="h-screen bg-white flex overflow-hidden">
       {/* Left Side - Form */}
-      <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:w-1/2 xl:w-5/12">
-        <div className="mx-auto w-full max-w-sm lg:w-96">
-          <div className="mb-10">
-            <Link href="/" className="flex items-center gap-2 group mb-8">
+      <div className="flex-1 flex flex-col py-10 px-4 sm:px-10 lg:flex-none lg:w-1/2 xl:w-5/12 overflow-y-auto">
+        {/* Back to home */}
+        <div className="mb-6">
+          <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            Back to home
+          </Link>
+        </div>
+
+        <div className="mx-auto w-full max-w-sm lg:w-96 flex-1 flex flex-col justify-center">
+          <div className="mb-8">
+            <Link href="/">
               <Image
                 src="/assets/image.png"
                 alt="Uri Academy"
-                width={160}
-                height={160}
-                className="h-40 w-auto object-contain group-hover:scale-105 transition-transform"
+                width={120}
+                height={120}
+                className="h-24 w-auto object-contain"
                 priority
               />
             </Link>

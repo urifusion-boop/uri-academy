@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+
 import { useState } from 'react';
 import { api } from '@/services/api';
 import type { User } from '@/types/schema';
@@ -100,24 +101,21 @@ export default function Login() {
 
   return (
     <div className="animate-fade-in">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900">Welcome back</h2>
-        <p className="mt-2 text-sm text-gray-600">
-          Please enter your details to sign in.
+      <div className="mb-7">
+        <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          Sign in to continue your learning journey.
         </p>
       </div>
 
-      <form className="space-y-6" onSubmit={handleLogin}>
+      <form className="space-y-4" onSubmit={handleLogin}>
         <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
             Email address
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Mail className="h-5 w-5 text-gray-400" />
+              <Mail className="h-4 w-4 text-gray-400" />
             </div>
             <input
               id="email"
@@ -125,22 +123,24 @@ export default function Login() {
               type="email"
               autoComplete="email"
               required
-              className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-brand-500 focus:border-brand-500 transition-colors"
-              placeholder="Enter your email"
+              className="block w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors placeholder:text-gray-400"
+              placeholder="you@example.com"
             />
           </div>
         </div>
 
         <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Password
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <Link href="/forgot-password" className="text-xs text-brand-600 hover:text-brand-500 transition-colors">
+              Forgot password?
+            </Link>
+          </div>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="h-5 w-5 text-gray-400" />
+              <Lock className="h-4 w-4 text-gray-400" />
             </div>
             <input
               id="password"
@@ -148,90 +148,35 @@ export default function Login() {
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
               required
-              className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-brand-500 focus:border-brand-500 transition-colors"
+              className="block w-full pl-9 pr-10 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors placeholder:text-gray-400"
               placeholder="Enter your password"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-gray-600 focus:outline-none"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
             >
-              {showPassword ? (
-                <EyeOff className="h-5 w-5" />
-              ) : (
-                <Eye className="h-5 w-5" />
-              )}
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <input
-              id="remember-me"
-              name="remember-me"
-              type="checkbox"
-              className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-gray-300 rounded cursor-pointer"
-            />
-            <label
-              htmlFor="remember-me"
-              className="ml-2 block text-sm text-gray-600 cursor-pointer"
-            >
-              Remember me
-            </label>
-          </div>
-
-          <div className="text-sm">
-            <Link href="/forgot-password"
-              className="font-medium text-brand-600 hover:text-brand-500 transition-colors"
-            >
-              Forgot password?
-            </Link>
-          </div>
-        </div>
-
-        <div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Signing in...' : 'Sign in'}
-            {!loading && <ArrowRight className="ml-2 w-4 h-4" />}
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full flex justify-center items-center py-2.5 px-4 rounded-lg text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+        >
+          {loading ? 'Signing in...' : 'Sign in'}
+          {!loading && <ArrowRight className="ml-2 w-4 h-4" />}
+        </button>
       </form>
 
-      <div className="mt-8 text-center">
-        <p className="text-sm text-gray-600">
-          Don't have an account?{' '}
-          <Link href="/register"
-            className="font-bold text-brand-600 hover:text-brand-500 transition-colors"
-          >
-            Register now
-          </Link>
-        </p>
-      </div>
-
-      <div className="mt-8 pt-6 border-t border-gray-100">
-        <p className="text-xs text-center text-gray-400 uppercase tracking-wider mb-4">
-          Quick Demo Access
-        </p>
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            onClick={() => router.push('/student')}
-            className="px-4 py-2 bg-gray-50 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-100 transition-colors border border-gray-200"
-          >
-            Student Demo
-          </button>
-          <button
-            onClick={() => router.push('/admin')}
-            className="px-4 py-2 bg-gray-50 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-100 transition-colors border border-gray-200"
-          >
-            Admin Demo
-          </button>
-        </div>
-      </div>
+      <p className="mt-5 text-center text-sm text-gray-500">
+        Don&apos;t have an account?{' '}
+        <Link href="/register" className="font-semibold text-brand-600 hover:text-brand-500 transition-colors">
+          Register now
+        </Link>
+      </p>
     </div>
   );
 }
