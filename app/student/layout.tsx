@@ -20,7 +20,7 @@ import {
   BarChart3,
   Loader2,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { cn } from '@/lib/utils';
 import { api } from '@/services/api';
 import type { StudentProfile } from '@/types/schema';
@@ -46,7 +46,7 @@ const accountItems = [
 
 const allItems = [...academicItems, ...accountItems];
 
-export default function StudentLayout({
+function StudentLayoutContent({
   children,
 }: {
   children: React.ReactNode;
@@ -388,5 +388,21 @@ export default function StudentLayout({
         </main>
       </div>
     </div>
+  );
+}
+
+export default function StudentLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="w-12 h-12 text-brand-600 animate-spin" />
+      </div>
+    }>
+      <StudentLayoutContent>{children}</StudentLayoutContent>
+    </Suspense>
   );
 }
