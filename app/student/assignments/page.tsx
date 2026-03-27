@@ -19,6 +19,7 @@ export default function Assignments() {
   const [fileRef, setFileRef] = useState<string>('');
   const [uploadStatus, setUploadStatus] = useState<string>('');
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [viewingFeedback, setViewingFeedback] = useState<Submission | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -200,7 +201,7 @@ export default function Assignments() {
                 <button
                   type="button"
                   className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
-                  onClick={() => (isSubmitted ? null : openSubmit(assignment))}
+                  onClick={() => isSubmitted ? setViewingFeedback(submission!) : openSubmit(assignment)}
                 >
                   {isSubmitted ? 'View Feedback' : 'Submit'}
                 </button>
@@ -295,6 +296,47 @@ export default function Assignments() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {viewingFeedback && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Feedback</h2>
+              <button
+                type="button"
+                className="text-gray-500 hover:text-gray-700"
+                onClick={() => setViewingFeedback(null)}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500">Status</span>
+                <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${
+                  viewingFeedback.status === 'REVIEWED' ? 'bg-green-100 text-green-700' :
+                  'bg-amber-100 text-amber-700'
+                }`}>
+                  {viewingFeedback.status}
+                </span>
+              </div>
+              {viewingFeedback.score !== null && viewingFeedback.score !== undefined && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Score</span>
+                  <span className="text-sm font-semibold text-gray-900">{viewingFeedback.score}</span>
+                </div>
+              )}
+              <div>
+                <span className="text-sm text-gray-500 block mb-1">Feedback</span>
+                <p className="text-sm text-gray-800 bg-gray-50 rounded-lg p-3">
+                  {viewingFeedback.feedback || 'No feedback provided yet.'}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}
