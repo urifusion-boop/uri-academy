@@ -3,12 +3,20 @@ export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { api } from '@/services/api';
 import { useToast } from '@/context/ToastContext';
 
 export default function ResetPassword() {
+  return (
+    <Suspense>
+      <ResetPasswordForm />
+    </Suspense>
+  );
+}
+
+function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addToast } = useToast();
