@@ -34,7 +34,7 @@ async function fetchClient<T>(
   endpoint: string,
   options?: RequestInit & { skipAuth?: boolean },
 ): Promise<T> {
-  const token = localStorage.getItem('token');
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   };
@@ -42,11 +42,6 @@ async function fetchClient<T>(
   if (token && !options?.skipAuth) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-
-  console.log(`[API Request] ${options?.method || 'GET'} ${endpoint}`, {
-    hasToken: !!token,
-    url: `${API_URL}${endpoint}`,
-  });
 
   // Normalize URL to prevent double /api prefix if API_URL includes it
   let finalUrl = `${API_URL}${endpoint}`;
@@ -114,10 +109,9 @@ async function fetchClient<T>(
       .then(async (response) => {
         if (!response.ok) {
           if (response.status === 401) {
-            console.error(
-              '[API Error] 401 Unauthorized. Token may be invalid.',
-            );
-            window.dispatchEvent(new Event('auth:unauthorized'));
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new Event('auth:unauthorized'));
+            }
           }
           throw new Error(
             `API Error: ${response.status} ${response.statusText}`,
@@ -137,13 +131,20 @@ async function fetchClient<T>(
 
   if (!response.ok) {
     if (response.status === 401) {
-      console.error('[API Error] 401 Unauthorized. Token may be invalid.');
-      // Dispatch event for the app to handle (e.g., redirect to login)
-      window.dispatchEvent(new Event('auth:unauthorized'));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('auth:unauthorized'));
+      }
     }
-    const errorBody = await response.text();
+    // Parse error body to extract a clean message without leaking internals
+    let errorBody = '';
+    try {
+      const body = await response.json();
+      errorBody = body?.message || body?.error || '';
+    } catch {
+      // ignore parse errors
+    }
     throw new Error(
-      `API Error: ${response.status} ${response.statusText} - ${errorBody}`,
+      errorBody || `API Error: ${response.status} ${response.statusText}`,
     );
   }
 
@@ -165,48 +166,37 @@ export const clearUserProfileCache = () => {
   userProfileCache = null;
   userProfileCacheTimestamp = 0;
   profileFetchForbidden = false;
-  localStorage.removeItem('user_profile');
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('user_profile');
+  }
 };
 
 const hydrateProfile = async (
   profile: StudentProfile,
 ): Promise<StudentProfile> => {
-  console.log('Hydrating profile - input:', profile);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const p = profile as any;
 
   // 1. Map snake_case cohort_id if present and cohortId is missing
   if (!p.cohortId && p.cohort_id) {
     p.cohortId = p.cohort_id;
-    console.log('Mapped cohort_id to cohortId:', p.cohortId);
   }
 
   // 2. Handle case where cohort is just an ID string
   if (typeof p.cohort === 'string') {
-    console.log('Cohort is a string ID, moving to cohortId:', p.cohort);
     p.cohortId = p.cohort;
-    p.cohort = undefined; // Clear it so we fetch the full object
+    p.cohort = undefined;
   }
 
   // 3. Hydrate cohort if missing but ID exists
   if (p.cohortId && !p.cohort) {
     try {
-      console.log('Fetching missing cohort details for ID:', p.cohortId);
-      // Use fetchClient directly to avoid circular reference to 'api'
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const cohort = await fetchClient<any>(`/api/cohorts/${p.cohortId}`);
       p.cohort = cohort;
-      console.log('Hydrated cohort details:', cohort);
-    } catch (e) {
-      console.warn('Failed to hydrate cohort details', e);
+    } catch {
+      // Non-fatal: cohort details unavailable, profile still usable
     }
-  } else {
-    console.log(
-      'Cohort hydration skipped. cohortId:',
-      p.cohortId,
-      'cohort:',
-      p.cohort,
-    );
   }
 
   return p as StudentProfile;
@@ -234,7 +224,7 @@ export const api = {
       return fetchClient('/api/auth/refresh', { method: 'POST' });
     },
     logout: () => {
-      const refreshToken = localStorage.getItem('refreshToken');
+      const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
       if (refreshToken) {
         return fetchClient('/api/auth/logout', {
           method: 'POST',
@@ -848,7 +838,9 @@ export const api = {
 
       userProfileCache = profile;
       userProfileCacheTimestamp = Date.now();
-      localStorage.setItem('user_profile', JSON.stringify(profile));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user_profile', JSON.stringify(profile));
+      }
       return profile;
     } catch (error) {
       // Handle 403 Forbidden specifically - often implies role mismatch or missing profile
@@ -858,11 +850,17 @@ export const api = {
         profileFetchForbidden = true; // stop retrying this session
       }
 
+      if (typeof window === 'undefined') throw error;
+
       // Fallback 1: Stored full profile
       const storedProfile = localStorage.getItem('user_profile');
       if (storedProfile) {
-        const profile = JSON.parse(storedProfile);
-        return await hydrateProfile(profile);
+        try {
+          const profile = JSON.parse(storedProfile);
+          return await hydrateProfile(profile);
+        } catch {
+          // corrupt stored profile, continue to next fallback
+        }
       }
 
       // Fallback 2: Stored user object -> Partial profile
@@ -985,7 +983,7 @@ export const api = {
     upload: async (file: File): Promise<{ url: string }> => {
       const formData = new FormData();
       formData.append('file', file);
-      const token = localStorage.getItem('token');
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       const res = await fetch(`${API_URL}/api/files/upload`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},

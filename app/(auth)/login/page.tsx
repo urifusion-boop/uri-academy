@@ -45,8 +45,6 @@ export default function Login() {
         email,
         password,
       })) as AuthResponse;
-      console.log('Login Response:', response); // Debugging
-
       const token =
         response.token || response.accessToken || response.data?.token;
 

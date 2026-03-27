@@ -82,11 +82,7 @@ export default function Settings() {
           // Initialize notifications if available in user data
         }
       } catch (error) {
-        console.error('Failed to fetch profile:', error);
         addToast(getErrorMessage(error), 'error');
-        if (error instanceof Error && error.message.includes('401')) {
-          addToast('Your session has expired. Please log in again.', 'error');
-        }
       } finally {
         setDataLoading(false);
       }
@@ -214,7 +210,11 @@ export default function Settings() {
   };
 
   if (dataLoading) {
-    return <div className="p-8 text-center">Loading settings...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600" />
+      </div>
+    );
   }
 
   const user = profile?.user;

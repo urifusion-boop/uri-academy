@@ -267,7 +267,11 @@ export default function AdminCohorts() {
   const minutes = ['00', '15', '30', '45'];
 
   if (loading) {
-    return <div className="p-8 text-center">Loading cohorts...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600" />
+      </div>
+    );
   }
 
   return (

@@ -1,19 +1,29 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { AlertCircle, Shield, CheckCircle, Clock } from 'lucide-react';
-import { useState } from 'react';
+import { AlertCircle, Shield, CheckCircle, Clock, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import type { StudentProfile } from '@/types/schema';
 import { api } from '@/services/api';
 import { useToast } from '@/context/ToastContext';
 
 export default function Payments() {
   const [loading, setLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
   const { addToast } = useToast();
   const router = useRouter();
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [paymentPlan, setPaymentPlan] = useState<'full' | 'deposit'>('full');
   const [discountCode, setDiscountCode] = useState('');
+
+  useEffect(() => {
+    api.getCurrentUserProfile()
+      .then(setProfile)
+      .catch(() => {
+        // profile unavailable — page will still render payment options
+      })
+      .finally(() => setProfileLoading(false));
+  }, []);
 
   const payments = profile?.payments || [];
   const paidAmount = payments
@@ -121,10 +131,10 @@ export default function Payments() {
     }
   };
 
-  if (!profile) {
+  if (profileLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
+        <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
       </div>
     );
   }
@@ -247,6 +257,7 @@ export default function Payments() {
               </div>
 
               <button
+                type="button"
                 onClick={handlePayment}
                 disabled={loading}
                 className="w-full btn-primary py-3 text-lg font-semibold flex items-center justify-center gap-2"
@@ -295,6 +306,7 @@ export default function Payments() {
               </div>
 
               <button
+                type="button"
                 onClick={handlePayment}
                 disabled={loading}
                 className="w-full btn-primary py-3 text-lg font-semibold flex items-center justify-center gap-2"

@@ -45,10 +45,7 @@ export default function Assignments() {
           );
         }
       } catch (error) {
-        console.error('Failed to fetch assignments data:', error);
-        if (error instanceof Error && error.message.includes('401')) {
-          addToast('Your session has expired. Please log in again.', 'error');
-        }
+        addToast(getErrorMessage(error), 'error');
         setAssignments([]);
       } finally {
         setLoading(false);
@@ -159,7 +156,11 @@ export default function Assignments() {
   };
 
   if (loading) {
-    return <div className="p-8 text-center">Loading assignments...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600" />
+      </div>
+    );
   }
 
   return (

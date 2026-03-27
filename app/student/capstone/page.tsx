@@ -136,7 +136,9 @@ export default function Capstone() {
 
       <div className="bg-white p-8 rounded-xl border shadow-sm mb-8">
         {loading ? (
-          <div className="p-6 text-center text-gray-500">Loading...</div>
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600" />
+          </div>
         ) : !capstone ? (
           <div className="p-6 text-center text-gray-500">
             Capstone assignment not available yet. Please check back later.

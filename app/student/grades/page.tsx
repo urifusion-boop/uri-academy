@@ -30,12 +30,7 @@ export default function MyGrades() {
         setAssignments(Array.isArray(assignmentsList) ? assignmentsList : []);
         setSubmissions(Array.isArray(submissionsList) ? submissionsList : []);
       } catch (err) {
-        console.error('Failed to fetch grades data:', err);
-        const msg = getErrorMessage(err);
-        addToast(msg, 'error');
-        if (err instanceof Error && err.message.includes('401')) {
-          addToast('Your session has expired. Please log in again.', 'error');
-        }
+        addToast(getErrorMessage(err), 'error');
       } finally {
         setLoading(false);
       }

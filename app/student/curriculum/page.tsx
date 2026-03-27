@@ -24,6 +24,7 @@ export default function Curriculum() {
   const [curriculum, setCurriculum] = useState<CurriculumItem[]>([]);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [resources, setResources] = useState<Record<string, ContentAsset[]>>(
     {}
   );
@@ -94,16 +95,14 @@ export default function Curriculum() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const curriculumData = await api.getCurriculum();
+        const [curriculumData, profileData] = await Promise.all([
+          api.getCurriculum(),
+          api.getCurrentUserProfile().catch(() => null),
+        ]);
         setCurriculum(curriculumData);
-      } catch (error) {
-        console.error('Failed to fetch curriculum:', error);
-      }
-      try {
-        const profileData = await api.getCurrentUserProfile();
         setProfile(profileData);
-      } catch (error) {
-        console.error('Failed to get current user profile', error);
+      } catch (err) {
+        setError('Failed to load curriculum. Please refresh the page.');
       } finally {
         setLoading(false);
       }
@@ -126,7 +125,19 @@ export default function Curriculum() {
   }, [expandedItemId]);
 
   if (loading) {
-    return <div className="p-8 text-center">Loading curriculum...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-gray-500">{error}</p>
+      </div>
+    );
   }
 
   // Calculate stats based on loaded resources and local completion state
@@ -345,6 +356,7 @@ export default function Curriculum() {
                           >
                             <div className="flex items-center gap-4 flex-1">
                               <button
+                                type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   toggleComplete(r.id);
