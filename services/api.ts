@@ -983,13 +983,17 @@ export const api = {
   },
 
   files: {
-    upload: async (data: { fileName: string; contentType?: string }) => {
-      const body = JSON.stringify(data);
-      try {
-        return await fetchClient('/api/files/upload', { method: 'POST', body });
-      } catch {
-        return fetchClient('/files/upload', { method: 'POST', body });
-      }
+    upload: async (file: File): Promise<{ url: string }> => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/api/files/upload`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+      return res.json();
     },
     getDownloadUrl: async (fileRef: string) => {
       if (USE_MOCK) {
